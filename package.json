@@ -10,7 +10,6 @@
   },
   "scripts": {
     "start": "node index.js",
-    "register": "node commands.js",
     "dev": "nodemon index.js"
   },
   "author": "Steph",

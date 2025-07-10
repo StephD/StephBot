@@ -1,0 +1,40 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+export async function loadCommands(client) {
+  try {
+    // Get the commands directory path
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const commandsPath = path.join(__dirname, '..', 'commands');
+    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+    
+    // Collection to store command data for registration
+    const commandsArray = [];
+    
+    // Load each command file
+    for (const file of commandFiles) {
+      try {
+        const filePath = `file://${path.join(commandsPath, file)}`;
+        // Dynamic import for ESM
+        const command = await import(filePath);
+        
+        // Check if command has required data and execute function
+        if ('data' in command && 'execute' in command) {
+          client.commands.set(command.data.name, command);
+          commandsArray.push(command.data);
+          console.log(`✅ Command loaded: ${command.data.name}`);
+        } else {
+          console.warn(`⚠️ The command at ${file} is missing required "data" or "execute" properties.`);
+        }
+      } catch (error) {
+        console.error(`❌ Error loading command from ${file}:`, error);
+      }
+    }
+    
+    return commandsArray;
+  } catch (error) {
+    console.error('❌ Error loading commands:', error);
+    return [];
+  }
+}
