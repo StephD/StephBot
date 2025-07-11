@@ -142,7 +142,7 @@ export async function getBoosterByDiscordId(discordId) {
  * @param {number|null} premiumSince - Timestamp when the user started boosting or null if not boosting
  * @returns {Promise<{success: boolean, message: string, data?: any}>}
  */
-export async function updateBoostergameId(discordId, discordName, gameId, premiumSince) {
+export async function updateBoosterGameId(discordId, discordName, gameId, premiumSince) {
   try {
     // First check if the booster exists
     const { data: existingBooster, error: fetchError } = await supabase

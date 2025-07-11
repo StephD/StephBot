@@ -1,5 +1,5 @@
 import { EmbedBuilder } from 'discord.js';
-import { updateBoostergameId } from '../../supabase/booster.js';
+import { updateBoosterGameId } from '../../supabase/booster.js';
 
 export async function executeUpdateId(interaction, client) {
   try {
@@ -24,7 +24,7 @@ export async function executeUpdateId(interaction, client) {
     console.log('Premium since timestamp:', premiumSince);
     
     // Call the function to update the booster UID in Supabase
-    const result = await updateBoostergameId(discordId, discordName, gameId, premiumSince);
+    const result = await updateBoosterGameId(discordId, discordName, gameId, premiumSince);
     
     if (result.success) {
       // Create a success embed

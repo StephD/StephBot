@@ -6,9 +6,9 @@ export const data = [
   new SlashCommandBuilder()
     .setName('hello')
     .setDescription('Replies with a friendly hello message'),
-    new SlashCommandBuilder()
-      .setName('hello2')
-      .setDescription('Replies with a friendly hello2 message'),
+  // new SlashCommandBuilder()
+  //   .setName('hello2')
+  //   .setDescription('Replies with a friendly hello2 message'),
   
   // Ping command
   new SlashCommandBuilder()
@@ -26,9 +26,9 @@ export async function execute(interaction, client) {
   }
   
   // Handle hello2 command
-  if (commandName === 'hello2') {
-    await interaction.reply('👋 Hello2! This is a basic Discord bot response.');
-  }
+  // if (commandName === 'hello2') {
+  //   await interaction.reply('👋 Hello2! This is a basic Discord bot response.');
+  // }
   
   // Handle ping command
   else if (commandName === 'ping') {
