@@ -40,7 +40,7 @@ export async function getAllBoosters() {
  * @param {boolean} [options.upsert=false] - If true, update the record if it already exists
  * @returns {Promise<{success: boolean, message: string, data?: any, error?: string}>}
  */
-export async function createBooster({ discordId, discordName, gameId, premiumSince }, options = {}) {
+export async function createBooster({ discordId, discordName, gameId, premiumSince, discordNickname }, options = {}) {
   try {
     // Check if the booster already exists
     const { data: existingBooster, error: fetchError } = await supabase
@@ -73,9 +73,9 @@ export async function createBooster({ discordId, discordName, gameId, premiumSin
       .insert({
         discord_id: discordId,
         discord_name: discordName,
+        discord_nickname: discordNickname,
         game_id: gameId,
-        premium_since: premiumSince ? new Date(premiumSince).toISOString() : null,
-        created_at: new Date().toISOString(),
+        premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
         updated_at: new Date().toISOString()
       })
       .select()
@@ -142,32 +142,39 @@ export async function getBoosterByDiscordId(discordId) {
  * @param {number|null} premiumSince - Timestamp when the user started boosting or null if not boosting
  * @returns {Promise<{success: boolean, message: string, data?: any}>}
  */
-export async function updateBoosterGameId(discordId, discordName, gameId, premiumSince) {
+export async function updateBoosterGameId(discordId, discordName, gameId, premiumSince, discordNickname = null) {
   try {
     // First check if the booster exists
     const { data: existingBooster, error: fetchError } = await supabase
       .from('boosters')
       .select('*')
-      .eq('discord_id', discordId)
+      .eq('discord_name', discordName)
       .single();
     
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
       throw new Error(fetchError.message);
     }
+    //keep the date only
+    console.log('premiumSince', new Date(premiumSince).toISOString().split('T')[0] );
     
     let result;
     
     if (existingBooster) {
+      console.log('Updating booster:', existingBooster);
       // Update existing booster
+      const updateData = {
+        game_id: gameId,
+        active: premiumSince ? true : false,
+        discord_name: discordName,
+        discord_nickname: discordNickname,
+        premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
+        updated_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('boosters')
-        .update({
-          game_id: gameId,
-          discord_name: discordName,
-          premium_since: premiumSince ? new Date(premiumSince).toISOString() : null,
-          discord_nickname: discordNickname
-        })
-        .eq('discord_id', discordId)
+        .update(updateData)
+        .eq('discord_name', discordName)
         .select()
         .single();
       
@@ -180,15 +187,19 @@ export async function updateBoosterGameId(discordId, discordName, gameId, premiu
       };
     } else {
       // Create new booster
+      const insertData = {
+        discord_id: discordId,
+        discord_name: discordName,
+        discord_nickname: discordNickname,
+        game_id: gameId,
+        active: premiumSince ? true : false,
+        premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
+        updated_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('boosters')
-        .insert({
-          discord_id: discordId,
-          discord_name: discordName,
-          game_id: gameId,
-          premium_since: premiumSince ? new Date(premiumSince).toISOString() : null,
-          discord_nickname: discordNickname
-        })
+        .insert(insertData)
         .select()
         .single();
       

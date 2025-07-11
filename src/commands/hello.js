@@ -34,7 +34,8 @@ export async function execute(interaction, client) {
   else if (commandName === 'ping') {
     const guildName = interaction.guild ? interaction.guild.name : 'Direct Message';
     const guildId = interaction.guild ? interaction.guild.id : 'N/A';
-    const sent = await interaction.reply({ content: `Pinging... (Server: **${guildName}**)`, fetchReply: true });
+    const response = await interaction.reply({ content: `Pinging... (Server: **${guildName}**)` });
+    const sent = response;
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
     await interaction.editReply(`Pong! Bot latency: ${latency}ms | API Latency: ${Math.round(client.ws.ping)}ms | Server: ${guildName}, Guild ID: ${guildId}`);
   }

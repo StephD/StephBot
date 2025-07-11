@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 import { getAllBoosters, updateBoosterGameId, getBoosterByDiscordId } from '../supabase/booster.js';
-import { hasPermission } from '../config/roles.js';
 import { executeMe } from './booster/me.js';
+import { executeAddMe } from './booster/addme.js';
 
 // Define the command data using SlashCommandBuilder
 export const data = [
@@ -13,6 +13,16 @@ export const data = [
       subcommand
       .setName('me')
       .setDescription('Show your booster information')
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+      .setName('addme')
+      .setDescription('Add yourself to the booster list')      .addStringOption(option =>
+        option
+          .setName('game_id')
+          .setDescription('Your in-game ID')
+          .setRequired(true)
+      )
     ),
   // Admin commands - restricted with permissions
   new SlashCommandBuilder()
@@ -25,8 +35,8 @@ export const data = [
     )
     .addSubcommand(subcommand =>
       subcommand
-        .setName('discord-list')
-        .setDescription('List all boosters from discord (premium subscribers)')
+      .setName('discord-list')
+      .setDescription('List all boosters from discord (premium subscribers)')
     )
     .addSubcommand(subcommand =>
       subcommand
@@ -43,8 +53,7 @@ export const data = [
       subcommand
         .setName('me2')
         .setDescription('Show your booster information')
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    )    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   ];
 
 export async function execute(interaction, client) {
@@ -54,6 +63,9 @@ export async function execute(interaction, client) {
   if (commandName === 'booster') {
     if (subcommand === 'me') {
       await executeMe(interaction, client);
+    }
+    if (subcommand === 'addme') {
+      await executeAddMe(interaction, client);
     }
   }
   
@@ -216,7 +228,7 @@ export async function execute(interaction, client) {
       
         // Get the GuildMember object to access roles and premium status
         const member = interaction.member;
-        const nickname = member.nickname || 'None';
+        const nickname = member.globalName || 'None';
         const premiumSince = member.premiumSinceTimestamp;
         const isPremium = !!premiumSince;
       

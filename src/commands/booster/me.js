@@ -13,7 +13,7 @@ export async function executeMe(interaction, client) {
     
     // Get the GuildMember object to access roles and premium status
     const member = interaction.member;
-    const nickname = member.nickname || 'None';
+    const nickname = user.globalName || 'None';
     const premiumSince = member.premiumSinceTimestamp;
     const isPremium = !!premiumSince;
     
