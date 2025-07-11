@@ -4,5 +4,5 @@ export const data = {
 };
 
 export async function execute(interaction) {
-  await interaction.reply('👋 Hello! This is a basic Discord bot response.');
+  await interaction.reply('👋 Hello local! This is a basic Discord bot response.');
 }
