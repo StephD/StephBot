@@ -25,11 +25,124 @@ export async function getAllBoosters() {
  * Update a booster's in-game ID in the database
  * @param {string} discordId - The Discord ID of the user
  * @param {string} discordName - The Discord username
- * @param {string} igId - The new in-game ID
+ * @param {string} gameId - The new in-game ID
  * @param {number|null} premiumSince - Timestamp when the user started boosting or null if not boosting
  * @returns {Promise<{success: boolean, message: string, data?: any}>}
  */
-export async function updateBoosterIgId(discordId, discordName, igId, premiumSince) {
+/**
+ * Create a new booster in the database
+ * @param {Object} boosterData - The booster data
+ * @param {string} boosterData.discordId - The Discord ID of the user
+ * @param {string} boosterData.discordName - The Discord username
+ * @param {string} boosterData.gameId - The in-game ID
+ * @param {number|null} boosterData.premiumSince - Timestamp when the user started boosting or null if not boosting
+ * @param {Object} [options] - Additional options
+ * @param {boolean} [options.upsert=false] - If true, update the record if it already exists
+ * @returns {Promise<{success: boolean, message: string, data?: any, error?: string}>}
+ */
+export async function createBooster({ discordId, discordName, gameId, premiumSince }, options = {}) {
+  try {
+    // Check if the booster already exists
+    const { data: existingBooster, error: fetchError } = await supabase
+      .from('boosters')
+      .select('*')
+      .eq('discord_id', discordId)
+      .single();
+    
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+      throw new Error(fetchError.message);
+    }
+    
+    // If booster exists and upsert is false, return error
+    if (existingBooster && !options.upsert) {
+      return {
+        success: false,
+        message: 'Booster already exists',
+        data: existingBooster
+      };
+    }
+    
+    // If booster exists and upsert is true, update it
+    if (existingBooster && options.upsert) {
+      return updateBoostergameId(discordId, discordName, gameId, premiumSince);
+    }
+    
+    // Create new booster
+    const { data, error } = await supabase
+      .from('boosters')
+      .insert({
+        discord_id: discordId,
+        discord_name: discordName,
+        game_id: gameId,
+        premium_since: premiumSince ? new Date(premiumSince).toISOString() : null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    
+    return {
+      success: true,
+      message: 'New booster added successfully',
+      data
+    };
+  } catch (error) {
+    console.error('Error creating booster:', error);
+    return { 
+      success: false, 
+      message: `Failed to create booster: ${error.message}`,
+      error: error.message 
+    };
+  }
+}
+
+/**
+ * Update a booster's in-game ID in the database
+ * @param {string} discordId - The Discord ID of the user
+ * @param {string} discordName - The Discord username
+ * @param {string} gameId - The new in-game ID
+ * @param {number|null} premiumSince - Timestamp when the user started boosting or null if not boosting
+ * @returns {Promise<{success: boolean, message: string, data?: any}>}
+ */
+/**
+ * Get a booster by Discord ID
+ * @param {string} discordId - The Discord ID to look up
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+export async function getBoosterByDiscordId(discordId) {
+  try {
+    const { data, error } = await supabase
+      .from('boosters')
+      .select('*')
+      .eq('discord_id', discordId)
+      .single();
+    
+    if (error) {
+      // If no rows found, return success but with null data
+      if (error.code === 'PGRST116') {
+        return { success: true, data: null };
+      }
+      throw new Error(error.message);
+    }
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error fetching booster by Discord ID:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Update a booster's in-game ID in the database
+ * @param {string} discordId - The Discord ID of the user
+ * @param {string} discordName - The Discord username
+ * @param {string} gameId - The new in-game ID
+ * @param {number|null} premiumSince - Timestamp when the user started boosting or null if not boosting
+ * @returns {Promise<{success: boolean, message: string, data?: any}>}
+ */
+export async function updateBoostergameId(discordId, discordName, gameId, premiumSince) {
   try {
     // First check if the booster exists
     const { data: existingBooster, error: fetchError } = await supabase
@@ -49,10 +162,10 @@ export async function updateBoosterIgId(discordId, discordName, igId, premiumSin
       const { data, error } = await supabase
         .from('boosters')
         .update({
-          ig_id: igId,
+          game_id: gameId,
           discord_name: discordName,
           premium_since: premiumSince ? new Date(premiumSince).toISOString() : null,
-          updated_at: new Date().toISOString()
+          discord_nickname: discordNickname
         })
         .eq('discord_id', discordId)
         .select()
@@ -72,10 +185,9 @@ export async function updateBoosterIgId(discordId, discordName, igId, premiumSin
         .insert({
           discord_id: discordId,
           discord_name: discordName,
-          ig_id: igId,
+          game_id: gameId,
           premium_since: premiumSince ? new Date(premiumSince).toISOString() : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          discord_nickname: discordNickname
         })
         .select()
         .single();
