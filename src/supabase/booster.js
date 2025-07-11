@@ -64,7 +64,7 @@ export async function createBooster({ discordId, discordName, gameId, premiumSin
     
     // If booster exists and upsert is true, update it
     if (existingBooster && options.upsert) {
-      return updateBoostergameId(discordId, discordName, gameId, premiumSince);
+      return updateBoosterGameId(discordId, discordName, gameId, premiumSince);
     }
     
     // Create new booster

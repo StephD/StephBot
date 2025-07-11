@@ -63,7 +63,7 @@ export async function executeMe(interaction, client) {
       );
     } else {
       embed.addFields(
-        { name: '📊 Database Information', value: 'No records found in database. Use `/booster admin update-id` to register.', inline: false }
+        { name: '📊 Database Information', value: 'No records found in database. Use `/booster_admin update-id` to register.', inline: false }
       );
     }
     

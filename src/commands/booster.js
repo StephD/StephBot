@@ -1,56 +1,65 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import { getAllBoosters, updateBoostergameId, getBoosterByDiscordId } from '../supabase/booster.js';
+import { getAllBoosters, updateBoosterGameId, getBoosterByDiscordId } from '../supabase/booster.js';
 import { hasPermission } from '../config/roles.js';
+import { executeMe } from './booster/me.js';
 
 // Define the command data using SlashCommandBuilder
-export const data = new SlashCommandBuilder()
-  .setName('booster')
-  .setDescription('Commands for managing boosters')
-  // User commands - available to everyone
-  .addSubcommand(subcommand =>
-    subcommand
+export const data = [
+  new SlashCommandBuilder()
+    .setName('booster')
+    .setDescription('Commands for managing boosters')
+    // User commands - available to everyone
+    .addSubcommand(subcommand =>
+      subcommand
       .setName('me')
       .setDescription('Show your booster information')
-  )
+    ),
   // Admin commands - restricted with permissions
-  .addSubcommandGroup(group =>
-    group
-      .setName('admin')
-      .setDescription('Admin commands for managing boosters')
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName('list')
-          .setDescription('List all boosters')
-      )
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName('discord-list')
-          .setDescription('List all boosters from discord (premium subscribers)')
-      )
-      .addSubcommand(subcommand =>
-        subcommand
-          .setName('update-id')
-          .setDescription('Update your in-game ID')
-          .addStringOption(option =>
-            option
-              .setName('game_id')
+  new SlashCommandBuilder()
+    .setName('booster_admin')
+    .setDescription('Admin commands for managing boosters')
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('list')
+        .setDescription('List all boosters')
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('discord-list')
+        .setDescription('List all boosters from discord (premium subscribers)')
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('update-id')
+        .setDescription('Update your in-game ID')
+        .addStringOption(option =>
+          option
+            .setName('game_id')
               .setDescription('Your new in-game ID')
               .setRequired(true)
           )
-      )
-  )
-  // Set permissions for the admin subcommand group
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
-
-// Function removed as we're now using the one from supabase.js
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('me2')
+        .setDescription('Show your booster information')
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  ];
 
 export async function execute(interaction, client) {
+  const commandName = interaction.commandName;
   const subcommand = interaction.options.getSubcommand();
-  const subcommandGroup = interaction.options.getSubcommandGroup(false);
+  
+  if (commandName === 'booster') {
+    if (subcommand === 'me') {
+      await executeMe(interaction, client);
+    }
+  }
   
   // Handle admin subcommand group - permissions are already set at the Discord API level
   // through setDefaultMemberPermissions in the command definition
-  if (subcommandGroup === 'admin') {
+  if (commandName === 'booster_admin') {
     if (subcommand === 'list') {
       try {
         // Defer reply as the operation might take time
@@ -160,7 +169,7 @@ export async function execute(interaction, client) {
         console.log('Premium since timestamp:', premiumSince);
       
         // Call the function to update the booster UID in Supabase
-        const result = await updateBoostergameId(discordId, discordName, gameId, premiumSince);
+        const result = await updateBoosterGameId(discordId, discordName, gameId, premiumSince);
       
         if (result.success) {
           // Create a success embed
@@ -195,7 +204,7 @@ export async function execute(interaction, client) {
           await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
         }
       }
-    } else if (subcommand === 'me') {
+    } else if (subcommand === 'me2') {
       try {
         // Defer reply as the operation might take time
         await interaction.deferReply();
