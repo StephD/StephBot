@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from 'discord.js';
 
 // Define the command data using SlashCommandBuilder
 export const data = new SlashCommandBuilder()
-  .setName('testapi')
+  .setName('api')
   .setDescription('Tests an external API and returns the response')
   .addStringOption(option => 
     option.setName('url')

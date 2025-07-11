@@ -12,7 +12,9 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,  // Required for accessing guild members
+    GatewayIntentBits.GuildPresences  // Required for accessing member presence data
   ] 
 });
 

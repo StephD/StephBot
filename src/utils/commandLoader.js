@@ -12,6 +12,9 @@ export async function loadCommands(client) {
     // Collection to store command data for registration
     const commandsArray = [];
     
+    // Array to collect command names
+    const commandNames = [];
+    
     // Load each command file
     for (const file of commandFiles) {
       try {
@@ -31,13 +34,13 @@ export async function loadCommands(client) {
                 execute: command.execute
               });
               commandsArray.push(commandData);
-              console.log(`✅ Command loaded: ${commandData.name}`);
+              commandNames.push(commandData.name);
             }
           } else {
             // Single command in the file
             client.commands.set(command.data.name, command);
             commandsArray.push(command.data);
-            console.log(`✅ Command loaded: ${command.data.name}`);
+            commandNames.push(command.data.name);
           }
         } else {
           console.warn(`⚠️ The command at ${file} is missing required "data" or "execute" properties.`);
@@ -46,6 +49,9 @@ export async function loadCommands(client) {
         console.error(`❌ Error loading command from ${file}:`, error);
       }
     }
+    
+    // Log all commands in a single line
+    console.log(`✅ Command loaded: ${commandNames.join(' / ')}`);
     
     return commandsArray;
   } catch (error) {

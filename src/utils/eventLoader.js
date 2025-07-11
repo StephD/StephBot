@@ -9,6 +9,9 @@ export async function loadEvents(client) {
     const eventsPath = path.join(__dirname, '..', 'events');
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
     
+    // Array to collect event names
+    const eventNames = [];
+    
     // Load each event file
     for (const file of eventFiles) {
       try {
@@ -22,7 +25,7 @@ export async function loadEvents(client) {
           } else {
             client.on(event.name, (...args) => event.execute(...args, client));
           }
-          console.log(`✅ Event loaded: ${event.name}`);
+          eventNames.push(event.name);
         } else {
           console.warn(`⚠️ The event at ${file} is missing required properties.`);
         }
@@ -30,6 +33,9 @@ export async function loadEvents(client) {
         console.error(`❌ Error loading event from ${file}:`, error);
       }
     }
+    
+    // Log all events in a single line
+    console.log(`✅ Event loaded: ${eventNames.join(' / ')}`);
   } catch (error) {
     console.error('❌ Error loading events:', error);
   }

@@ -4,7 +4,7 @@ import { loadCommands } from './commandLoader.js';
 
 export async function registerCommands(client) {
   try {
-    console.log('Started refreshing application commands.');
+    // console.log('Started refreshing application commands.');
 
     // Load all commands
     const commands = await loadCommands(client);
@@ -46,7 +46,7 @@ export async function registerCommands(client) {
         Routes.applicationCommands(config.appId),
         { body: commands },
       );
-      console.log(`✅ Successfully registered ${commands.length} global commands. These may take up to an hour to appear.`);
+      console.log(`✅ Successfully registered ${commands.length} global commands.`);
     }
   } catch (error) {
     console.error('❌ Error registering commands:', error);

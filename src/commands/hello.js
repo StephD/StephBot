@@ -1,8 +1,31 @@
-export const data = {
-  name: 'hello',
-  description: 'Replies with a friendly hello message',
-};
+import { SlashCommandBuilder } from 'discord.js';
 
-export async function execute(interaction) {
-  await interaction.reply('👋 Hello local! This is a basic Discord bot response.');
+// Export an array of command data objects
+export const data = [
+  // Hello command
+  new SlashCommandBuilder()
+    .setName('hello')
+    .setDescription('Replies with a friendly hello message'),
+  
+  // Ping command
+  new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Replies with the bot latency')
+];
+
+// Execute function that handles both commands
+export async function execute(interaction, client) {
+  const commandName = interaction.commandName;
+  
+  // Handle hello command
+  if (commandName === 'hello') {
+    await interaction.reply('👋 Hello local! This is a basic Discord bot response.');
+  }
+  
+  // Handle ping command
+  else if (commandName === 'ping') {
+    const sent = await interaction.reply({ content: 'Pinging...', fetchReply: true });
+    const latency = sent.createdTimestamp - interaction.createdTimestamp;
+    await interaction.editReply(`Pong! Bot latency: ${latency}ms | API Latency: ${Math.round(client.ws.ping)}ms`);
+  }
 }
