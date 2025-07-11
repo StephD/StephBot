@@ -21,9 +21,24 @@ export async function loadCommands(client) {
         
         // Check if command has required data and execute function
         if ('data' in command && 'execute' in command) {
-          client.commands.set(command.data.name, command);
-          commandsArray.push(command.data);
-          console.log(`✅ Command loaded: ${command.data.name}`);
+          // Handle both single commands and arrays of commands
+          if (Array.isArray(command.data)) {
+            // Multiple commands in one file
+            for (const commandData of command.data) {
+              // Register each command with the same execute function
+              client.commands.set(commandData.name, {
+                data: commandData,
+                execute: command.execute
+              });
+              commandsArray.push(commandData);
+              console.log(`✅ Command loaded: ${commandData.name}`);
+            }
+          } else {
+            // Single command in the file
+            client.commands.set(command.data.name, command);
+            commandsArray.push(command.data);
+            console.log(`✅ Command loaded: ${command.data.name}`);
+          }
         } else {
           console.warn(`⚠️ The command at ${file} is missing required "data" or "execute" properties.`);
         }

@@ -10,7 +10,8 @@
   },
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "register": "node src/scripts/register-commands.js"
   },
   "author": "Steph",
   "license": "MIT",

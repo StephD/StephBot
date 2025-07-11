@@ -23,9 +23,11 @@ async function main() {
   try {
     // Load all event handlers
     await loadEvents(client);
+    // client.config = require('./config');
 
     // Login to Discord with token
     await client.login(process.env.DISCORD_TOKEN);
+
 
     console.log('Starting Discord bot...');
     // console.log('✅ Use "/hello" or "/ping" to test the commands');
