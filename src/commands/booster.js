@@ -1,10 +1,12 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 import { Colors } from '../utils/colors.js';
-import { getAllBoosters, updateBoosterGameId, getBoosterByDiscordId } from '../supabase/booster.js';
+import { getAllBoosters, updateBoosterGameId, getBoosterByDiscordId, createBooster } from '../supabase/booster.js';
+import supabase from '../utils/supabase.js';
 import { executeMe } from './booster/me.js';
 import { executeAddMe } from './booster/addme.js';
 import { executeList } from './booster/list.js';
 import { executeDiscordList } from './booster/discord-list.js';
+import { executeRefreshBoosters } from './booster/refresh_boosters.js';
 
 // Define the command data using SlashCommandBuilder
 export const data = [
@@ -43,6 +45,11 @@ export const data = [
         .setName('me2')
         .setDescription('Show your booster information')
     )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('refresh_boosters')
+        .setDescription('Sync Discord boosters with database - add missing ones and deactivate removed ones')
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
   ];
 
@@ -79,6 +86,8 @@ export async function execute(interaction, client) {
         await executeDiscordList(interaction, client);
     } else if (subcommand === 'me2') {
         await executeMe(interaction, client);
+    } else if (subcommand === 'refresh_boosters') {
+        await executeRefreshBoosters(interaction, client);
     }
   }
 }

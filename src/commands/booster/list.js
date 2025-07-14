@@ -6,6 +6,8 @@ export async function executeList(interaction, client) {
     // Defer reply as the operation might take time
     await interaction.deferReply();
     
+    console.log(`Listing boosters: ${interaction.guild.name}`);
+    
     // Get all boosters from Supabase
     const result = await getAllBoosters();
     

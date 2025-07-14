@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { callExternalApi, formatApiResponse } from '../utils/api.js';
 import { Colors } from '../utils/colors.js';
 
@@ -199,19 +199,24 @@ export async function execute(interaction, client) {
   
   // Handle clickme command
   else if (commandName === 'clickme') {
-    // Create a button
-    const button = new ButtonBuilder()
+    // Create buttons
+    const button1 = new ButtonBuilder()
       .setCustomId('click_me_button')
       .setLabel('Click Me!')
       .setStyle(ButtonStyle.Primary);
+      
+    const button2 = new ButtonBuilder()
+      .setCustomId('click_me_2_button')
+      .setLabel('Click Me 2 (Modal)')
+      .setStyle(ButtonStyle.Success);
     
-    // Add the button to an action row
+    // Add the buttons to an action row
     const row = new ActionRowBuilder()
-      .addComponents(button);
+      .addComponents(button1, button2);
     
-    // Send the message with the button
+    // Send the message with the buttons
     const response = await interaction.reply({
-      content: 'Here is a button for you to click:',
+      content: 'Here are buttons for you to click:',
       components: [row],
       fetchReply: true
     });
@@ -224,25 +229,76 @@ export async function execute(interaction, client) {
       if (i.customId === 'click_me_button') {
         // Respond to the button interaction
         await i.reply({ content: 'You clicked the button! 🎉', ephemeral: true });
+      } else if (i.customId === 'click_me_2_button') {
+        // Create a modal for user input
+        const modal = new ModalBuilder()
+          .setCustomId('user_input_modal')
+          .setTitle('Enter Your Information');
+          
+        // Create text input components
+        const nameInput = new TextInputBuilder()
+          .setCustomId('name_input')
+          .setLabel('What is your name?')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+          
+        const feedbackInput = new TextInputBuilder()
+          .setCustomId('feedback_input')
+          .setLabel('Any feedback for us?')
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(false)
+          .setPlaceholder('Type your feedback here...');
+          
+        // Add inputs to the modal
+        const firstActionRow = new ActionRowBuilder().addComponents(nameInput);
+        const secondActionRow = new ActionRowBuilder().addComponents(feedbackInput);
+        modal.addComponents(firstActionRow, secondActionRow);
+        
+        // Show the modal to the user
+        await i.showModal(modal);
+        
+        // Wait for modal submission (max 2 minutes)
+        // If no submission is received before the timeout, the promise will reject
+        // but we'll ignore the rejection since we want to do nothing in that case
+        const submission = await i.awaitModalSubmit({
+          filter: (interaction) => interaction.customId === 'user_input_modal',
+          time: 120000 // 2 minutes
+        }).catch(() => null); // Catch and do nothing on timeout
+        
+        // Only process if we got a submission
+        if (submission) {
+          // Get the data entered by the user
+          const name = submission.fields.getTextInputValue('name_input');
+          const feedback = submission.fields.getTextInputValue('feedback_input') || 'No feedback provided';
+          
+          // Respond to the modal submission
+          await submission.reply({
+            content: `Thank you for your submission, ${name}!\n\n**Your Feedback:**\n${feedback}`,
+            ephemeral: true
+          });
+        }
+        // If submission is null (timeout), we do nothing
       }
     });
     
     // Handle collector end
     collector.on('end', collected => {
-      // Disable the button when the collector ends
+      // Disable the buttons when the collector ends
       const disabledRow = new ActionRowBuilder()
         .addComponents(
-          ButtonBuilder.from(button)
-            .setDisabled(true)
+          ButtonBuilder.from(button1).setDisabled(true),
+          ButtonBuilder.from(button2).setDisabled(true)
         );
       
-      // Update the message with disabled button
+      // Update the message with disabled buttons
       interaction.editReply({
-        content: 'This button is no longer active.',
+        content: 'These buttons are no longer active.',
         components: [disabledRow]
       }).catch(error => console.error('Error updating message:', error));
     });
   }
+  
+
   
   // Handle api command
   else if (commandName === 'api') {

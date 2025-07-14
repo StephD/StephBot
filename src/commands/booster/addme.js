@@ -7,6 +7,8 @@ export async function executeAddMe(interaction, client) {
     // Get the game ID from the command options
     const gameId = interaction.options.getString('game_id');
     
+    console.log(`Adding booster: ${interaction.guild.name}`);
+    
     // Validate game_id: must be exactly 28 characters and contain only letters and numbers
     if (!gameId || gameId.length !== 28 || !/^[a-zA-Z0-9]+$/.test(gameId)) {
       const errorEmbed = new EmbedBuilder()
