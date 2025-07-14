@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { callExternalApi, formatApiResponse } from '../utils/api.js';
 import { Colors } from '../utils/colors.js';
 
@@ -40,6 +40,16 @@ export const data = [
         .setDescription('The URL of the API to test')
         .setRequired(true)
     ).setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    
+  // Click Me command with button
+  new SlashCommandBuilder()
+    .setName('clickme')
+    .setDescription('Displays a button that you can click'),
+    
+  // Buttons command with embed and multiple buttons
+  new SlashCommandBuilder()
+    .setName('buttons')
+    .setDescription('Displays an embed with multiple interactive buttons'),
 ];
 
 // Execute function that handles both commands
@@ -95,6 +105,143 @@ export async function execute(interaction, client) {
         flags: ['Ephemeral'] 
       });
     }
+  }
+  
+  // Handle buttons command with embed and multiple buttons
+  else if (commandName === 'buttons') {
+    // Create an embed
+    const embed = new EmbedBuilder()
+      .setTitle('Interactive Buttons Example')
+      .setDescription('This is an example of interactive buttons in Discord. Click the buttons below to see what happens!')
+      .setColor(Colors.SUCCESS)
+      .addFields(
+        { name: 'Button 1', value: 'Click the primary button to see a success message', inline: true },
+        { name: 'Button 2', value: 'Click the secondary button to see the embed change', inline: true }
+      )
+      .setFooter({ text: 'Buttons will become inactive after 2 minutes' })
+      .setTimestamp();
+    
+    // Create two buttons with different styles
+    const primaryButton = new ButtonBuilder()
+      .setCustomId('primary_button')
+      .setLabel('Primary Button')
+      .setStyle(ButtonStyle.Primary);
+    
+    const secondaryButton = new ButtonBuilder()
+      .setCustomId('secondary_button')
+      .setLabel('Secondary Button')
+      .setStyle(ButtonStyle.Secondary);
+    
+    // Add the buttons to an action row
+    const row = new ActionRowBuilder()
+      .addComponents(primaryButton, secondaryButton);
+    
+    // Send the message with the embed and buttons
+    const response = await interaction.reply({
+      embeds: [embed],
+      components: [row],
+      fetchReply: true
+    });
+    
+    // Create a collector for button interactions
+    const collector = response.createMessageComponentCollector({ time: 120000 }); // 2 minutes timeout
+    
+    // Handle button clicks
+    collector.on('collect', async i => {
+      try {
+        if (i.customId === 'primary_button') {
+          // Respond with a success message
+          await i.reply({ 
+            content: 'You clicked the primary button! This is a success message that only you can see.', 
+            flags: ['Ephemeral'] 
+          });
+        } else if (i.customId === 'secondary_button') {
+          // Update the embed
+          const updatedEmbed = EmbedBuilder.from(embed)
+            .setTitle('Embed Updated!')
+            .setDescription('You clicked the secondary button and the embed has been updated!')
+            .setColor('#FF9900') // Orange color
+            .setTimestamp();
+          
+          // Update the message
+          await i.update({ embeds: [updatedEmbed] });
+        }
+      } catch (error) {
+        console.error('Error handling button interaction:', error);
+        await i.reply({ 
+          content: `Error: ${error.message}`, 
+          flags: ['Ephemeral'] 
+        }).catch(console.error);
+      }
+    });
+    
+    // Handle collector end
+    collector.on('end', collected => {
+      try {
+        // Disable the buttons when the collector ends
+        const disabledRow = new ActionRowBuilder()
+          .addComponents(
+            ButtonBuilder.from(primaryButton).setDisabled(true),
+            ButtonBuilder.from(secondaryButton).setDisabled(true)
+          );
+        
+        // Update the message with disabled buttons
+        interaction.editReply({
+          content: 'These buttons are no longer active.',
+          embeds: [embed],
+          components: [disabledRow]
+        }).catch(error => console.error('Error updating message:', error));
+      } catch (error) {
+        console.error('Error in collector end handler:', error);
+      }
+    });
+  }
+  
+  // Handle clickme command
+  else if (commandName === 'clickme') {
+    // Create a button
+    const button = new ButtonBuilder()
+      .setCustomId('click_me_button')
+      .setLabel('Click Me!')
+      .setStyle(ButtonStyle.Primary);
+    
+    // Add the button to an action row
+    const row = new ActionRowBuilder()
+      .addComponents(button);
+    
+    // Send the message with the button
+    const response = await interaction.reply({
+      content: 'Here is a button for you to click:',
+      components: [row],
+      fetchReply: true
+    });
+    
+    // Create a collector for button interactions
+    const collector = response.createMessageComponentCollector({ time: 60000 }); // 60 seconds timeout
+    
+    // Handle button clicks
+    collector.on('collect', async i => {
+      if (i.customId === 'click_me_button') {
+        // Respond to the button interaction
+        await i.reply({ content: 'You clicked the button! 🎉', ephemeral: true });
+      }
+    });
+    
+    // Handle collector end
+    collector.on('end', collected => {
+      // Disable the button when the collector ends
+      const disabledRow = new ActionRowBuilder()
+        .addComponents(
+          ButtonBuilder.from(button)
+            .setDisabled(true)
+        );
+      
+      // Update the message with disabled button
+      interaction.editReply({
+        content: 'This button is no longer active.',
+        components: [disabledRow]
+      }).catch(error => console.error('Error updating message:', error));
+    });
   }
   
   // Handle api command

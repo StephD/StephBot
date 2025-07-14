@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { getBoosterByDiscordId } from '../../supabase/booster.js';
 
 export async function executeMe(interaction, client) {
@@ -67,14 +67,97 @@ export async function executeMe(interaction, client) {
       );
     }
     
-    await interaction.editReply({ embeds: [embed] });
+    // Create buttons for additional actions
+    const updateButton = new ButtonBuilder()
+      .setCustomId('update_game_id')
+      .setLabel('Update Game ID')
+      .setStyle(ButtonStyle.Primary);
+      
+    const refreshButton = new ButtonBuilder()
+      .setCustomId('refresh_profile')
+      .setLabel('Refresh Profile')
+      .setStyle(ButtonStyle.Secondary);
+    
+    // Add buttons to an action row
+    const row = new ActionRowBuilder()
+      .addComponents(updateButton, refreshButton);
+    
+    // Send the message with the embed and buttons
+    const response = await interaction.editReply({ 
+      embeds: [embed],
+      components: [row],
+      fetchReply: true
+    });
+    
+    // Create a collector for button interactions
+    const collector = response.createMessageComponentCollector({ time: 300000 }); // 5 minutes timeout
+    
+    // Handle button clicks
+    collector.on('collect', async i => {
+      // Verify that the user who clicked is the same who ran the command
+      if (i.user.id !== interaction.user.id) {
+        await i.reply({ content: 'This button is not for you!', flags: ['Ephemeral'] });
+        return;
+      }
+      
+      if (i.customId === 'update_game_id') {
+        // Prompt the user to use the addme command
+        await i.reply({ 
+          content: 'To update your game ID, please use the `/booster addme` command with your 28-character game ID.', 
+          flags: ['Ephemeral'] 
+        });
+      } else if (i.customId === 'refresh_profile') {
+        // Acknowledge the button click
+        await i.deferUpdate();
+        
+        try {
+          // Fetch fresh data
+          const freshResult = await getBoosterByDiscordId(discordId);
+          
+          // Update the embed with fresh data
+          if (freshResult.success && freshResult.data) {
+            embed.spliceFields(embed.data.fields.length - 3, 3,
+              { name: '📊 Database Information', value: '─────────────────', inline: false },
+              { name: 'Game ID', value: freshResult.data.game_id || 'Not set', inline: true },
+              { name: 'First Registered', value: freshResult.data.created_at ? new Date(freshResult.data.created_at).toLocaleDateString() : 'Unknown', inline: true },
+              { name: 'Last Updated', value: freshResult.data.updated_at ? new Date(freshResult.data.updated_at).toLocaleDateString() : 'Unknown', inline: true }
+            );
+          }
+          
+          // Update timestamp
+          embed.setTimestamp();
+          
+          // Update the message
+          await i.editReply({ embeds: [embed] });
+        } catch (error) {
+          console.error('Error refreshing profile:', error);
+          await i.followUp({ content: `Error refreshing profile: ${error.message}`, flags: ['Ephemeral'] });
+        }
+      }
+    });
+    
+    // Handle collector end
+    collector.on('end', collected => {
+      // Disable the buttons when the collector ends
+      const disabledRow = new ActionRowBuilder()
+        .addComponents(
+          ButtonBuilder.from(updateButton).setDisabled(true),
+          ButtonBuilder.from(refreshButton).setDisabled(true)
+        );
+      
+      // Update the message with disabled buttons
+      interaction.editReply({
+        embeds: [embed],
+        components: [disabledRow]
+      }).catch(error => console.error('Error updating message:', error));
+    });
   } catch (error) {
     console.error('Error executing booster me command:', error);
     
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(`Error: ${error.message}`);
     } else {
-      await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+      await interaction.reply({ content: `Error: ${error.message}`, flags: ['Ephemeral'] });
     }
   }
 }
