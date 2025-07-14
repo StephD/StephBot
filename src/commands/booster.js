@@ -3,6 +3,8 @@ import { Colors } from '../utils/colors.js';
 import { getAllBoosters, updateBoosterGameId, getBoosterByDiscordId } from '../supabase/booster.js';
 import { executeMe } from './booster/me.js';
 import { executeAddMe } from './booster/addme.js';
+import { executeList } from './booster/list.js';
+import { executeDiscordList } from './booster/discord-list.js';
 
 // Define the command data using SlashCommandBuilder
 export const data = [
@@ -70,7 +72,7 @@ export async function execute(interaction, client) {
         if (interaction.deferred || interaction.replied) {
           await interaction.editReply(`Error: ${error.message}`);
         } else {
-          await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+          await interaction.reply({ content: `Error: ${error.message}`, flags: ['Ephemeral'] });
         }
       }
     } else if (subcommand === 'discord-list') {

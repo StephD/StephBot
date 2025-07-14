@@ -48,7 +48,8 @@ export async function execute(interaction, client) {
   
   // Handle hello command
   if (commandName === 'hello') {
-    await interaction.reply('👋 Hello ' + process.env.NODE_ENV === 'development' ? 'dev' : '' + ' ! This is a basic Discord bot response.');
+    const env = process.env.NODE_ENV === 'development' ? 'dev' : '';
+    await interaction.reply('👋 Hello ' + env + ' ! This is a basic Discord bot response.');
   }
   
   // Handle ping command
