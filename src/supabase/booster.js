@@ -9,7 +9,7 @@ export async function getAllBoosters() {
     const { data, error } = await supabase
       .from('boosters')
       .select('*')
-      .where('active', 'is', true)
+      .eq('active', true)
       .order('premium_since', { ascending: false });
     
     if (error) {

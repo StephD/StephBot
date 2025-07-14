@@ -25,11 +25,7 @@ export async function executeList(interaction, client) {
       
       // Format the booster data
       const boosterList = result.data.map((booster, index) => {
-        return `**${index + 1}.** <@${booster.discord_id}> (${booster.discord_name})
-` +
-          `   • IG ID: ${booster.game_id || 'Not set'}
-` +
-          `   • Boosting since: ${booster.premium_since ? new Date(booster.premium_since).toLocaleDateString() : 'Not boosting'}`;
+        return `**${index + 1}.** <@${booster.discord_id}> (${booster.discord_name})`;
       }).join('\n\n');
       
       // Split into chunks if too long (Discord has a 4096 character limit for embed descriptions)
@@ -42,7 +38,7 @@ export async function executeList(interaction, client) {
         let currentChunk = '';
         
         for (const booster of result.data) {
-          const boosterText = `**•** <@${booster.discord_id}> (${booster.discord_name}) - IG ID: ${booster.game_id || 'Not set'}`;
+          const boosterText = `**${index + 1}.** <@${booster.discord_id}> (${booster.discord_name})`;
           
           if (currentChunk.length + boosterText.length + 1 > 4000) {
             chunks.push(currentChunk);

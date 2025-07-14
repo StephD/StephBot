@@ -1,10 +1,24 @@
 import { EmbedBuilder, ApplicationCommandOptionType } from 'discord.js';
 import { updateBoosterGameId } from '../../supabase/booster.js';
+import { Colors } from '../../utils/colors.js';
 
 export async function executeAddMe(interaction, client) {
   try {
     // Get the game ID from the command options
     const gameId = interaction.options.getString('game_id');
+    
+    // Validate game_id: must be exactly 28 characters and contain only letters and numbers
+    if (!gameId || gameId.length !== 28 || !/^[a-zA-Z0-9]+$/.test(gameId)) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle('Error Adding Booster')
+        .setColor(Colors.ERROR)
+        .setDescription('Invalid game ID. The game ID must be exactly 28 characters long and contain only letters and numbers.')
+        .setTimestamp();
+      return interaction.reply({
+        embeds: [errorEmbed],
+        flags: ['Ephemeral']
+      });
+    }
     
     // Defer reply as the operation might take time
     await interaction.deferReply();
@@ -34,7 +48,7 @@ export async function executeAddMe(interaction, client) {
       // Create a success embed
       const successEmbed = new EmbedBuilder()
         .setTitle('Booster Added')
-        .setColor('#00FF00')
+        .setColor(Colors.SUCCESS)
         .setDescription(result.message)
         .addFields(
           { name: 'Discord User', value: `<@${discordId}> (${discordName})`, inline: true },
@@ -44,25 +58,25 @@ export async function executeAddMe(interaction, client) {
         )
         .setTimestamp();
       
-      await interaction.editReply({ embeds: [successEmbed] });
+      await interaction.editReply({ embeds: [successEmbed], flags: ['Ephemeral'] });
     } else {
       // Create an error embed
       const errorEmbed = new EmbedBuilder()
         .setTitle('Error Adding Booster')
-        .setColor('#FF0000')
+        .setColor(Colors.ERROR)
         .setDescription(result.message)
         .setTimestamp();
       
-      await interaction.editReply({ embeds: [errorEmbed] });
+      await interaction.editReply({ embeds: [errorEmbed], flags: ['Ephemeral'] });
     }
   } catch (error) {
     console.error('Error executing booster addme command:', error);
     
     // Handle errors appropriately
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(`Error: ${error.message}`);
+      await interaction.editReply(`Error: ${error.message}`, { flags: ['Ephemeral'] });
     } else {
-      await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+      await interaction.reply({ content: `Error: ${error.message}`, flags: ['Ephemeral'] });
     }
   }
 }
