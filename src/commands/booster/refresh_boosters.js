@@ -132,7 +132,7 @@ export async function executeRefreshBoosters(interaction, client) {
           try {
             // Verify that the user who clicked is the same who ran the command
             if (i.user.id !== interaction.user.id) {
-              await i.reply({ content: 'This button is not for you!', ephemeral: true });
+              await i.reply({ content: 'This button is not for you!', flags: ['Ephemeral'] });
               return;
             }
             
@@ -294,7 +294,7 @@ export async function executeRefreshBoosters(interaction, client) {
                       .setDescription(`An error occurred while processing boosters: ${error.message}`)
                       .setTimestamp()
                   ],
-                  ephemeral: true
+                  flags: ['Ephemeral']
                 });
                 reject(error);
               }
@@ -365,7 +365,7 @@ export async function executeRefreshBoosters(interaction, client) {
             .setDescription(`An error occurred while refreshing boosters: ${error.message}`)
             .setTimestamp()
         ],
-        ephemeral: true
+        flags: ['Ephemeral']
       });
     }
     

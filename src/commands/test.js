@@ -149,7 +149,7 @@ export async function execute(interaction, client) {
           if (i.deferred) {
             await i.editReply({ embeds: [errorEmbed] }).catch(console.error);
           } else {
-            await i.reply({ embeds: [errorEmbed], ephemeral: true }).catch(console.error);
+            await i.reply({ embeds: [errorEmbed], flags: ['Ephemeral'] }).catch(console.error);
           }
         } catch (followUpError) {
           console.error('Failed to send error message:', followUpError);
@@ -267,7 +267,7 @@ export async function execute(interaction, client) {
             // Respond to the modal submission
               await submission.reply({
               content: `Thank you for your submission, ${name}!\n\n**Your Feedback:**\n${feedback}`,
-                ephemeral: true
+                flags: ['Ephemeral']
               });
             } catch (error) {
               console.error('Error processing modal submission:', error);
@@ -282,7 +282,7 @@ export async function execute(interaction, client) {
                 
               // Try to respond with the error message
               try {
-                await submission.reply({ embeds: [errorEmbed], ephemeral: true });
+                await submission.reply({ embeds: [errorEmbed], flags: ['Ephemeral'] });
               } catch (replyError) {
                 console.error('Failed to send error response for modal:', replyError);
               }
