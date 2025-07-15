@@ -14,7 +14,7 @@ import { Colors } from '../../utils/colors.js';
 export async function executeRefreshBoosters(interaction, client) {
   try {
     // Defer reply as this operation might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     
     // Create an embed to track the progress
     const embed = new EmbedBuilder()
@@ -35,7 +35,7 @@ export async function executeRefreshBoosters(interaction, client) {
     if (!premiumRole) {
       embed.setColor(Colors.ERROR)
         .setDescription('This server does not have any boosters or the premium subscribers role could not be found.');
-      return interaction.editReply({ embeds: [embed] });
+      return interaction.editReply({ embeds: [embed], ephemeral: true });
     }
     
     // Fetch all guild members

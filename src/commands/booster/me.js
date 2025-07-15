@@ -4,7 +4,7 @@ import { getBoosterByDiscordId } from '../../supabase/booster.js';
 export async function executeMe(interaction, client) {
   try {
     // Defer reply as the operation might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     
     // Get user information
     const user = interaction.user;

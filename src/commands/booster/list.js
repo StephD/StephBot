@@ -4,7 +4,7 @@ import { getAllBoosters } from '../../supabase/booster.js';
 export async function executeList(interaction, client) {
   try {
     // Defer reply as the operation might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     
     console.log(`Listing boosters: ${interaction.guild.name}`);
     

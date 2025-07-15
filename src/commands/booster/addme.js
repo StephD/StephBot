@@ -23,7 +23,7 @@ export async function executeAddMe(interaction, client) {
     }
     
     // Defer reply as the operation might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     
     // Get the Discord user information
     const user = interaction.user;
@@ -53,14 +53,14 @@ export async function executeAddMe(interaction, client) {
         .setColor(Colors.SUCCESS)
         .setDescription(result.message)
         .addFields(
-          { name: 'Discord User', value: `<@${discordId}> (${discordName})`, inline: true },
+          { name: 'Discordwdd User', value: `<@${discordId}> (${discordName})`, inline: true },
           { name: 'Nickname', value: nickname, inline: true },
           { name: 'In-Game ID', value: gameId, inline: true },
           { name: 'Booster Status', value: premiumSince ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true } 
         )
         .setTimestamp();
       
-      await interaction.editReply({ embeds: [successEmbed], flags: ['Ephemeral'] });
+      await interaction.editReply({ embeds: [successEmbed] });
     } else {
       // Create an error embed
       const errorEmbed = new EmbedBuilder()
@@ -69,16 +69,16 @@ export async function executeAddMe(interaction, client) {
         .setDescription(result.message)
         .setTimestamp();
       
-      await interaction.editReply({ embeds: [errorEmbed], flags: ['Ephemeral'] });
+      await interaction.editReply({ embeds: [errorEmbed] });
     }
   } catch (error) {
     console.error('Error executing booster addme command:', error);
     
     // Handle errors appropriately
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(`Error: ${error.message}`, { flags: ['Ephemeral'] });
+      await interaction.editReply(`Error: ${error.message}`);
     } else {
-      await interaction.reply({ content: `Error: ${error.message}`, flags: ['Ephemeral'] });
+      await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
     }
   }
 }

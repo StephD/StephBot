@@ -3,7 +3,7 @@ import { EmbedBuilder } from 'discord.js';
 export async function executeDiscordList(interaction, client) {
   try {
     // Defer reply as fetching members might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     
     console.log(`Fetching boosters for server: ${interaction.guild.name}`);
     
