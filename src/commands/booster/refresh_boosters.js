@@ -215,6 +215,7 @@ export async function executeRefreshBoosters(interaction, client) {
                       .from('boosters')
                       .update({ 
                         active: false,
+                        premium_since: null,
                         updated_at: new Date().toISOString()
                       })
                       .eq('discord_id', booster.discord_id);
