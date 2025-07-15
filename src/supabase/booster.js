@@ -166,6 +166,7 @@ export async function updateBoosterGameId(discordId, discordName, gameId, premiu
         active: premiumSince ? true : false,
         discord_name: discordName,
         discord_nickname: discordNickname,
+        discord_id: discordId,
         premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
         updated_at: new Date().toISOString()
       };
