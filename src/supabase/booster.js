@@ -76,6 +76,7 @@ export async function createBooster({ discordId, discordName, gameId, premiumSin
         discord_id: discordId,
         discord_name: discordName,
         discord_nickname: discordNickname,
+        active: premiumSince ? true : false,
         game_id: gameId,
         premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
         updated_at: new Date().toISOString()

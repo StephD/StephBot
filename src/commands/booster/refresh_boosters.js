@@ -86,7 +86,7 @@ export async function executeRefreshBoosters(interaction, client) {
     const boostersToReactivate = allDbBoosters.filter(
       booster => !booster.active && discordBoosterIds.includes(booster.discord_id)
     );
-    
+
     // Show confirmation with buttons
     const confirmEmbed = new EmbedBuilder()
       .setTitle('Booster Sync Confirmation')
@@ -178,10 +178,11 @@ export async function executeRefreshBoosters(interaction, client) {
                 
                 for (const member of boostersToAdd) {
                   try {
-                    const discordId = member.id;
-                    const discordName = member.user.username;
-                    const nickname = member.nickname;
-                    const premiumSince = member.premiumSinceTimestamp;
+                    const user = member[1].user;
+                    const discordId = user.id;
+                    const discordName = user.username;
+                    const nickname = user.globalName;
+                    const premiumSince = member[1].premiumSinceTimestamp;
                     
                     // Create new booster with empty game_id
                     const result = await createBooster({
