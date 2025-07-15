@@ -1,7 +1,10 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 import { Colors } from '../utils/colors.js';
 
-export const data = new SlashCommandBuilder()
+// Check if we're in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
+export const data = isDev ? new SlashCommandBuilder()
   .setName('roles')
   .setDescription('Commands for managing and viewing roles')
   .addSubcommand(subcommand =>
@@ -14,7 +17,7 @@ export const data = new SlashCommandBuilder()
           .setDescription('The role to list users from')
           .setRequired(true)
       )
-  ).setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers);
+  ).setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers) : [];
 
 export async function execute(interaction, client) {
   const subcommand = interaction.options.getSubcommand();
@@ -24,10 +27,7 @@ export async function execute(interaction, client) {
     
     try {
       // Defer reply as fetching members might take time
-      const response = await interaction.deferReply({ withResponse: true });
-      
-      // Instead of fetching all members, we'll fetch only members with the specific role
-      // This is much more efficient, especially for large servers
+      await interaction.deferReply({ withResponse: true });
       
       // Create a promise that rejects after 15 seconds (increased timeout for larger servers)
       const timeout = new Promise((_, reject) => {

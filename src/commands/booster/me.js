@@ -4,7 +4,7 @@ import { getBoosterByDiscordId } from '../../supabase/booster.js';
 export async function executeMe(interaction, client) {
   try {
     // Defer reply as the operation might take time
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: ['Ephemeral'] });
     
     // Get user information
     const user = interaction.user;
@@ -36,10 +36,9 @@ export async function executeMe(interaction, client) {
       .setTitle('Your Booster Information')
       .setColor(isPremium ? '#f47fff' : '#5865F2') // Pink for premium, Discord blue for non-premium
       .addFields(
-        { name: 'Discord User', value: `<@${discordId}>`, inline: true },
+        { name: 'Discord User', value: `<@${discordId}> (${discordId})`, inline: true },
         { name: 'Username', value: discordName, inline: true },
         { name: 'Nickname', value: nickname, inline: true },
-        { name: 'Discord ID', value: discordId, inline: false },
         { name: 'Booster Status', value: isPremium ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: false }
       )
       .setTimestamp();
@@ -47,7 +46,7 @@ export async function executeMe(interaction, client) {
     // Add roles information
     if (roles.length > 0) {
       // Format roles with their IDs
-      const rolesList = roles.map(role => `<@&${role.id}> (${role.name}) - ID: ${role.id}`).join('\n');
+      const rolesList = roles.map(role => `<@&${role.id}>`).join('\n');
       embed.addFields({ name: '🛡️ Roles', value: rolesList || 'No roles', inline: false });
     } else {
       embed.addFields({ name: '🛡️ Roles', value: 'No roles', inline: false });
@@ -56,9 +55,10 @@ export async function executeMe(interaction, client) {
     // Add database information if available
     if (result.success && result.data) {
       embed.addFields(
+        { name: '\n', value: '\n', inline: false },
         { name: '📊 Database Information', value: '─────────────────', inline: false },
         { name: 'Game ID', value: result.data.game_id || 'Not set', inline: true },
-        { name: 'First Registered', value: result.data.created_at ? new Date(result.data.created_at).toLocaleDateString() : 'Unknown', inline: true },
+        { name: 'Booster Since', value: result.data.premium_since ? new Date(result.data.premium_since).toLocaleDateString() : 'Unknown', inline: true },
         { name: 'Last Updated', value: result.data.updated_at ? new Date(result.data.updated_at).toLocaleDateString() : 'Unknown', inline: true }
       );
     } else {
@@ -68,7 +68,7 @@ export async function executeMe(interaction, client) {
     }
     
     // Create buttons for additional actions
-    const updateButton = new ButtonBuilder()
+    /*const updateButton = new ButtonBuilder()
       .setCustomId('update_game_id')
       .setLabel('Update Game ID')
       .setStyle(ButtonStyle.Primary);
@@ -81,18 +81,17 @@ export async function executeMe(interaction, client) {
     // Add buttons to an action row
     const row = new ActionRowBuilder()
       .addComponents(updateButton, refreshButton);
-    
+      */
     // Send the message with the embed and buttons
-    const response = await interaction.editReply({ 
-      embeds: [embed],
-      components: [row],
-      fetchReply: true
+    await interaction.editReply({ 
+      embeds: [embed]
+      // No components since buttons are commented out
     });
     
     // Create a collector for button interactions
-    const collector = response.createMessageComponentCollector({ time: 300000 }); // 5 minutes timeout
+    // const collector = response.createMessageComponentCollector({ time: 300000 }); // 5 minutes timeout
     
-    // Handle button clicks
+    /* // Handle button clicks
     collector.on('collect', async i => {
       // Verify that the user who clicked is the same who ran the command
       if (i.user.id !== interaction.user.id) {
@@ -135,9 +134,10 @@ export async function executeMe(interaction, client) {
         }
       }
     });
+    */
     
     // Handle collector end
-    collector.on('end', collected => {
+    /*collector.on('end', collected => {
       // Disable the buttons when the collector ends
       const disabledRow = new ActionRowBuilder()
         .addComponents(
@@ -150,7 +150,7 @@ export async function executeMe(interaction, client) {
         embeds: [embed],
         components: [disabledRow]
       }).catch(error => console.error('Error updating message:', error));
-    });
+    });*/
   } catch (error) {
     console.error('Error executing booster me command:', error);
     

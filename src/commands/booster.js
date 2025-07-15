@@ -1,19 +1,11 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import { Colors } from '../utils/colors.js';
-import { getAllBoosters, updateBoosterGameId, getBoosterByDiscordId, createBooster } from '../supabase/booster.js';
-import supabase from '../utils/supabase.js';
-import { executeMe } from './booster/me.js';
-import { executeAddMe } from './booster/addme.js';
-import { executeList } from './booster/list.js';
-import { executeDiscordList } from './booster/discord-list.js';
-import { executeRefreshBoosters } from './booster/refresh_boosters.js';
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { executeMe, executeAddMe, executeList, executeDiscordList, executeRefreshBoosters, executeWelcome } from './booster/index.js';
 
 // Define the command data using SlashCommandBuilder
 export const data = [
   new SlashCommandBuilder()
     .setName('booster')
     .setDescription('Commands for managing boosters')
-    // User commands - available to everyone
     .addSubcommand(subcommand => subcommand.setName('me')
       .setDescription('Show your booster information'))
     .addSubcommand(subcommand => subcommand.setName('addme')
@@ -26,7 +18,6 @@ export const data = [
       )
   ),
   
-  // Admin commands - restricted with permissions
   new SlashCommandBuilder()
     .setName('booster_admin')
     .setDescription('Admin commands for managing boosters')
@@ -42,13 +33,13 @@ export const data = [
     )
     .addSubcommand(subcommand =>
       subcommand
-        .setName('me2')
-        .setDescription('Show your booster information')
+        .setName('refresh_boosters')
+        .setDescription('Sync Discord boosters with database - add missing ones and deactivate removed ones')
     )
     .addSubcommand(subcommand =>
       subcommand
-        .setName('refresh_boosters')
-        .setDescription('Sync Discord boosters with database - add missing ones and deactivate removed ones')
+        .setName('welcome')
+        .setDescription('Display welcome message with booster registration options')
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
   ];
@@ -61,7 +52,7 @@ export async function execute(interaction, client) {
     if (subcommand === 'me') {
       await executeMe(interaction, client);
     }
-    if (subcommand === 'addme') {
+    else if (subcommand === 'addme') {
       await executeAddMe(interaction, client);
     }
   }
@@ -84,10 +75,10 @@ export async function execute(interaction, client) {
       }
     } else if (subcommand === 'discord-list') {
         await executeDiscordList(interaction, client);
-    } else if (subcommand === 'me2') {
-        await executeMe(interaction, client);
     } else if (subcommand === 'refresh_boosters') {
         await executeRefreshBoosters(interaction, client);
+    } else if (subcommand === 'welcome') {
+        await executeWelcome(interaction, client);
     }
   }
 }

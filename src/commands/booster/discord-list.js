@@ -3,7 +3,7 @@ import { EmbedBuilder } from 'discord.js';
 export async function executeDiscordList(interaction, client) {
   try {
     // Defer reply as fetching members might take time
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: ['Ephemeral'] });
     
     console.log(`Fetching boosters for server: ${interaction.guild.name}`);
     
@@ -68,12 +68,12 @@ export async function executeDiscordList(interaction, client) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({
         content: 'There was an error fetching the server boosters. Please try again later.',
-        ephemeral: true
+        flags: ['Ephemeral']
       });
     } else {
       await interaction.reply({
         content: 'There was an error fetching the server boosters.',
-        ephemeral: true
+        flags: ['Ephemeral']
       });
     }
   }

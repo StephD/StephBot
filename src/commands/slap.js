@@ -1,7 +1,10 @@
 import { SlashCommandBuilder } from 'discord.js';
 
+// Check if we're in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
 // Define the command data using SlashCommandBuilder
-export const data = new SlashCommandBuilder()
+export const data = isDev ? new SlashCommandBuilder()
   .setName('slap')
   .setDescription('Slap someone with a trout')
   .addUserOption(option =>
@@ -15,7 +18,7 @@ export const data = new SlashCommandBuilder()
       .setName('item')
       .setDescription('What to slap them with (default: a large trout)')
       .setRequired(false)
-  );
+  ) : [];
 
 // Execute function that handles the command logic
 export async function execute(interaction, client) {

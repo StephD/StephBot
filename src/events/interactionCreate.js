@@ -1,6 +1,11 @@
 export const name = 'interactionCreate';
 export const once = false;
 
+// Handle interactions
+// This is the main event handler for all interactions
+// It handles slash commands, button interactions, and other types of interactions
+// It is called for every interaction that is created
+
 export async function execute(interaction, client) {
   // Handle slash commands
   if (interaction.isChatInputCommand()) {
@@ -12,12 +17,13 @@ export async function execute(interaction, client) {
     }
 
     try {
+      console.log(`Executing command: ${interaction.commandName}`);
       await command.execute(interaction, client);
     } catch (error) {
       console.error(`Error executing ${interaction.commandName} command:`, error);
       
       // Respond to the user with an error message if the interaction is still valid
-      const errorReply = { content: 'There was an error executing this command.', ephemeral: true };
+      const errorReply = { content: 'There was an error executing this command.', flags: ['Ephemeral'] };
       
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp(errorReply);
@@ -28,8 +34,6 @@ export async function execute(interaction, client) {
   }
   
   // Handle button interactions
-  // Note: We don't need to handle button interactions here because they're handled
-  // by the collector in the command that created the button
   // This is just for any future global button handlers that aren't tied to specific commands
   else if (interaction.isButton()) {
     // Button interactions are handled by collectors in their respective commands

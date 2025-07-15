@@ -4,11 +4,8 @@ import { getAllBoosters } from '../../supabase/booster.js';
 export async function executeList(interaction, client) {
   try {
     // Defer reply as the operation might take time
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: ['Ephemeral'] });
     
-    console.log(`Listing boosters: ${interaction.guild.name}`);
-    
-    // Get all boosters from Supabase
     const result = await getAllBoosters();
     
     if (result.success && result.data) {
@@ -82,7 +79,7 @@ export async function executeList(interaction, client) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(`Error: ${error.message}`);
     } else {
-      await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+      await interaction.reply({ content: `Error: ${error.message}`, flags: ['Ephemeral'] });
     }
   }
 }

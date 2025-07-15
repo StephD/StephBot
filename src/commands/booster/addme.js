@@ -7,8 +7,6 @@ export async function executeAddMe(interaction, client) {
     // Get the game ID from the command options
     const gameId = interaction.options.getString('game_id');
     
-    console.log(`Adding booster: ${interaction.guild.name}`);
-    
     // Validate game_id: must be exactly 28 characters and contain only letters and numbers
     if (!gameId || gameId.length !== 28 || !/^[a-zA-Z0-9]+$/.test(gameId)) {
       const errorEmbed = new EmbedBuilder()
@@ -23,7 +21,7 @@ export async function executeAddMe(interaction, client) {
     }
     
     // Defer reply as the operation might take time
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: ['Ephemeral'] });
     
     // Get the Discord user information
     const user = interaction.user;
@@ -53,13 +51,14 @@ export async function executeAddMe(interaction, client) {
         .setColor(Colors.SUCCESS)
         .setDescription(result.message)
         .addFields(
-          { name: 'Discordwdd User', value: `<@${discordId}> (${discordName})`, inline: true },
+          { name: 'Discord User', value: `<@${discordId}> (${discordName})`, inline: true },
           { name: 'Nickname', value: nickname, inline: true },
           { name: 'In-Game ID', value: gameId, inline: true },
           { name: 'Booster Status', value: premiumSince ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true } 
         )
         .setTimestamp();
       
+      // Edit the deferred reply with the success embed
       await interaction.editReply({ embeds: [successEmbed] });
     } else {
       // Create an error embed
@@ -69,16 +68,24 @@ export async function executeAddMe(interaction, client) {
         .setDescription(result.message)
         .setTimestamp();
       
+      // Edit the deferred reply with the error embed
       await interaction.editReply({ embeds: [errorEmbed] });
     }
   } catch (error) {
     console.error('Error executing booster addme command:', error);
     
     // Handle errors appropriately
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(`Error: ${error.message}`);
-    } else {
-      await interaction.reply({ content: `Error: ${error.message}`, ephemeral: true });
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply(`Error: ${error.message}`);
+      } else {
+        await interaction.reply({ 
+          content: `Error: ${error.message}`, 
+          flags: ['Ephemeral'] 
+        });
+      }
+    } catch (responseError) {
+      console.error('Error sending error response:', responseError);
     }
   }
 }
