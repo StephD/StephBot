@@ -46,7 +46,7 @@ async function processGameIdFromModal(interaction, gameId, client) {
         .setTimestamp();
       
       // Send the success embed as a reply
-      await interaction.reply({ embeds: [successEmbed] });
+      await interaction.editReply({ embeds: [successEmbed] });
     } else {
       // Create an error embed
       const errorEmbed = new EmbedBuilder()
@@ -56,14 +56,14 @@ async function processGameIdFromModal(interaction, gameId, client) {
         .setTimestamp();
       
       // Send the error embed as a reply
-      await interaction.reply({ embeds: [errorEmbed] });
+      await interaction.editReply({ embeds: [errorEmbed] });
     }
   } catch (error) {
     console.error('Error processing game ID from modal:', error);
     
     try {
       // Handle errors appropriately - for modal submissions, just use reply
-      await interaction.reply({ 
+      await interaction.ereply({ 
         content: `Error: ${error.message}`, 
         // Keep the error message visible to everyone
       });
