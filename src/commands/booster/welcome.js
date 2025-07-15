@@ -63,9 +63,10 @@ async function processGameIdFromModal(interaction, gameId, client) {
     
     try {
       // Handle errors appropriately - for modal submissions, just use reply
-      await interaction.ereply({ 
+      await interaction.editReply({ 
         content: `Error: ${error.message}`, 
         // Keep the error message visible to everyone
+        flags: ['Ephemeral']
       });
     } catch (responseError) {
       console.error('Error sending error response:', responseError);
@@ -110,8 +111,7 @@ export async function executeWelcome(interaction, client) {
     
     // Create a collector for button interactions
     const collector = interaction.channel.createMessageComponentCollector({
-      filter: i => i.user.id === interaction.user.id && ['welcome_me_button', 'welcome_addme_button'].includes(i.customId),
-      time: 7 * 24 * 60 * 60 * 1000, // 7 days
+      filter: i => i.user.id === interaction.user.id && ['welcome_me_button', 'welcome_addme_button'].includes(i.customId)
     });
     
     // Handle button clicks
@@ -162,7 +162,7 @@ export async function executeWelcome(interaction, client) {
                 .setDescription('Invalid game ID. The game ID must be exactly 28 characters long and contain only letters and numbers.')
                 .setTimestamp();
               
-              await submission.reply({
+              await submission.editReply({
                 embeds: [errorEmbed]
               });
               return;
