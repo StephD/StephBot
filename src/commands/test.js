@@ -43,111 +43,110 @@ export async function execute(interaction, client) {
       .setFooter({ text: 'Buttons will become inactive after 1 minute' })
       .setTimestamp();
     
-    // Create two buttons with different styles
-    const primaryButton = new ButtonBuilder()
-      .setCustomId('primary_button')
-      .setLabel('Show message')
-      .setStyle(ButtonStyle.Primary);
-    
-    const secondaryButton = new ButtonBuilder()
-      .setCustomId('secondary_button')
-      .setLabel('Change embed')
-      .setStyle(ButtonStyle.Secondary);
-    
-    // Add the buttons to an action row
-    const row = new ActionRowBuilder()
-      .addComponents(primaryButton, secondaryButton);
-    
-    // Send the message with the embed and buttons
-    await interaction.reply({
-      embeds: [embed],
-      components: [row]
-    });
-    
-    // Create a collector for button interactions
-    const collector = interaction.channel.createMessageComponentCollector({ 
-      filter: i => i.user.id === interaction.user.id && ['primary_button', 'secondary_button'].includes(i.customId),
-      time: 60000 // 1 minute timeout
-    });
-    
-    // Handle button clicks
-    collector.on('collect', async i => {
-      try {
-        if (i.customId === 'primary_button') {
-          // Respond with a success message
-          await i.reply({ 
-            content: 'You clicked the primary button! This is a success message that only you can see.', 
-            flags: ['Ephemeral'] 
-          });
-        } else if (i.customId === 'secondary_button') {
-          // Update the embed
-          const updatedEmbed = EmbedBuilder.from(embed)
-            .setTitle('Embed Updated!')
-            .setDescription('You clicked the secondary button and the embed has been updated!')
-            .setColor('#FF9900') // Orange color
-            .setTimestamp();
-          
-          // Update the message
-          await i.update({ embeds: [updatedEmbed] });
-        }
-      } catch (error) {
-        console.error('Error handling button interaction:', error);
-        
-        // Create a more user-friendly error message with an embed
-        const errorEmbed = new EmbedBuilder()
-          .setTitle('Something went wrong')
-          .setDescription('We encountered an issue while processing your request.')
-          .setColor('#FF0000') // Red color for errors
-          .addFields({ name: 'What happened?', value: 'The interaction failed to complete properly.' })
-          .setFooter({ text: 'Please try again or contact support if the issue persists' })
-          .setTimestamp();
-          
-        // Try to respond with the error embed
+      // Create two buttons with different styles
+      const primaryButton = new ButtonBuilder()
+        .setCustomId('primary_button')
+        .setLabel('Show message')
+        .setStyle(ButtonStyle.Primary);
+      
+      const secondaryButton = new ButtonBuilder()
+        .setCustomId('secondary_button')
+        .setLabel('Change embed')
+        .setStyle(ButtonStyle.Secondary);
+      
+      // Add the buttons to an action row
+      const row = new ActionRowBuilder()
+        .addComponents(primaryButton, secondaryButton);
+      
+      // Send the message with the embed and buttons
+      await interaction.reply({
+        embeds: [embed],
+        components: [row]
+      });
+      
+      // Create a collector for button interactions
+      const collector = interaction.channel.createMessageComponentCollector({ 
+        filter: i => i.user.id === interaction.user.id && ['primary_button', 'secondary_button'].includes(i.customId),
+        time: 10000 // 10 second timeout
+      });
+      
+      // Handle button clicks
+      collector.on('collect', async i => {
         try {
-          // Check if we can reply or need to update
-          if (i.deferred) {
-            await i.editReply({ embeds: [errorEmbed] }).catch(console.error);
-          } else {
-            await i.reply({ embeds: [errorEmbed], flags: ['Ephemeral'] }).catch(console.error);
-          }
-        } catch (followUpError) {
-          console.error('Failed to send error message:', followUpError);
-        }
-      }
-    });
-    
-    // Handle collector end
-    collector.on('end', collected => {
-      try {
-        // Disable the buttons when the collector ends
-        const disabledRow = new ActionRowBuilder()
-          .addComponents(
-            ButtonBuilder.from(primaryButton).setDisabled(true),
-            ButtonBuilder.from(secondaryButton).setDisabled(true)
-          );
-                
-        // Update the message with disabled buttons and timeout embed
-        // Use fetchReply() to check if the message still exists before trying to edit it
-        interaction.fetchReply().then(reply => {
-          if (reply) {
-            interaction.editReply({
-              content: 'These buttons are no longer active.',
-              components: [disabledRow]
-            }).catch(error => {
-              // If we can't edit the reply, just log it - don't crash
-              console.error('Error updating message after timeout:', error);
+          if (i.customId === 'primary_button') {
+            // Respond with a success message
+            await i.reply({ 
+              content: 'You clicked the primary button! This is a success message that only you can see.', 
+              // flags: ['Ephemeral'] 
             });
+          } else if (i.customId === 'secondary_button') {
+            // Update the embed
+            const updatedEmbed = EmbedBuilder.from(embed)
+              .setTitle('Embed Updated!')
+              .setDescription('You clicked the secondary button and the embed has been updated!')
+              .setColor('#FF9900') // Orange color
+              .setTimestamp();
+            
+            // Update the message
+            await i.update({ embeds: [updatedEmbed] });
           }
-        }).catch(error => {
-          // If we can't fetch the reply, the message might have been deleted
-          console.error('Error fetching reply for timeout handling:', error);
-        });
-      } catch (error) {
-        console.error('Error in collector end handler:', error);
-      }
-    });
-    }
-    if (subcommand === 'modal') {
+        } catch (error) {
+          console.error('Error handling button interaction:', error);
+          
+          // Create a more user-friendly error message with an embed
+          const errorEmbed = new EmbedBuilder()
+            .setTitle('Something went wrong')
+            .setDescription('We encountered an issue while processing your request.')
+            .setColor('#FF0000') // Red color for errors
+            .addFields({ name: 'What happened?', value: 'The interaction failed to complete properly.' })
+            .setFooter({ text: 'Please try again or contact support if the issue persists' })
+            // .setTimestamp();
+            
+          // Try to respond with the error embed
+          try {
+            // Check if we can reply or need to update
+            if (i.deferred) {
+              await i.editReply({ embeds: [errorEmbed] }).catch(console.error);
+            } else {
+              await i.reply({ embeds: [errorEmbed], flags: ['Ephemeral'] }).catch(console.error);
+            }
+          } catch (followUpError) {
+            console.error('Failed to send error message:', followUpError);
+          }
+        }
+      });
+      
+      // Handle collector end
+      collector.on('end', collected => {
+        try {
+          // Disable the buttons when the collector ends
+          const disabledRow = new ActionRowBuilder()
+            .addComponents(
+              ButtonBuilder.from(primaryButton).setDisabled(true),
+              ButtonBuilder.from(secondaryButton).setDisabled(true)
+            );
+                  
+          // Update the message with disabled buttons and timeout embed
+          // Use fetchReply() to check if the message still exists before trying to edit it
+          interaction.fetchReply().then(reply => {
+            if (reply) {
+              interaction.editReply({
+                content: 'These buttons are no longer active.',
+                components: [disabledRow]
+              }).catch(error => {
+                // If we can't edit the reply, just log it - don't crash
+                console.error('Error updating message after timeout:', error);
+              });
+            }
+          }).catch(error => {
+            // If we can't fetch the reply, the message might have been deleted
+            console.error('Error fetching reply for timeout handling:', error);
+          });
+        } catch (error) {
+          console.error('Error in collector end handler:', error);
+        }
+      });
+    } else if (subcommand === 'modal') {
       // Create buttons
         const button1 = new ButtonBuilder()
         .setCustomId('click_me_button')
@@ -172,16 +171,15 @@ export async function execute(interaction, client) {
       // Create a collector for button interactions
       const collector = interaction.channel.createMessageComponentCollector({ 
         filter: i => i.user.id === interaction.user.id && ['click_me_button', 'click_me_2_button'].includes(i.customId),
-        time: 60000 // 1 minute timeout
+        time: 10000 // 10 second timeout
       });
       
       // Handle button clicks
       collector.on('collect', async i => {
         if (i.customId === 'click_me_button') {
-          // Respond to the button interaction
-          await i.reply({ content: 'You clicked the button! 🎉', flags: ['Ephemeral'] });
+          await i.reply({ content: 'You clicked the button! 🎉' });
+          
         } else if (i.customId === 'click_me_2_button') {
-          // Create a modal for user input
           const modal = new ModalBuilder()
             .setCustomId('user_input_modal')
             .setTitle('Enter Your Information');
@@ -193,40 +191,26 @@ export async function execute(interaction, client) {
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
             
-          const feedbackInput = new TextInputBuilder()
-            .setCustomId('feedback_input')
-            .setLabel('Any feedback for us?')
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(false)
-            .setPlaceholder('Type your feedback here...');
-            
           // Add inputs to the modal
           const firstActionRow = new ActionRowBuilder().addComponents(nameInput);
-          const secondActionRow = new ActionRowBuilder().addComponents(feedbackInput);
-          modal.addComponents(firstActionRow, secondActionRow);
+          modal.addComponents(firstActionRow);
           
           // Show the modal to the user
           await i.showModal(modal);
           
           // Wait for modal submission (max 2 minutes)
           // If no submission is received before the timeout, the promise will reject 
-          // but we'll ignore the rejection since we want to do nothing in that case
           const submission = await i.awaitModalSubmit({
             filter: (interaction) => interaction.customId === 'user_input_modal',
             time: 60000 // 1 minute
           }).catch(() => null); // Catch and do nothing on timeout
           
-          // Only process if we got a submission
           if (submission) {
             try {
-              // Get the data entered by the user
               const name = submission.fields.getTextInputValue('name_input');
-              const feedback = submission.fields.getTextInputValue('feedback_input') || 'No feedback provided';
-              
-            // Respond to the modal submission
+               
               await submission.reply({
-              content: `Thank you for your submission, ${name}!\n\n**Your Feedback:**\n${feedback}`,
-                flags: ['Ephemeral']
+                content: `Thank you for your submission, ${name}!\n\n`,
               });
             } catch (error) {
               console.error('Error processing modal submission:', error);
@@ -241,7 +225,7 @@ export async function execute(interaction, client) {
                 
               // Try to respond with the error message
               try {
-                await submission.reply({ embeds: [errorEmbed], flags: ['Ephemeral'] });
+                await submission.reply({ embeds: [errorEmbed] });
               } catch (replyError) {
                 console.error('Failed to send error response for modal:', replyError);
               }
