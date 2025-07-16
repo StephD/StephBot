@@ -109,9 +109,12 @@ export async function executeWelcome(interaction, client) {
       components: [row]
     });
     
-    // Create a collector for button interactions
+    // Create a collector for button interactions 
+    // Can add time here if we want
+    // Max 24h from discord limits
     const collector = interaction.channel.createMessageComponentCollector({
-      filter: i => i.user.id === interaction.user.id && ['welcome_me_button', 'welcome_addme_button'].includes(i.customId)
+      filter: i => i.user.id === interaction.user.id && ['welcome_me_button', 'welcome_addme_button'].includes(i.customId),
+      time: 60000 // 1 minute timeout
     });
     
     // Handle button clicks
