@@ -87,18 +87,49 @@ export async function executeRefreshBoosters(interaction, client) {
       booster => !booster.active && discordBoosterIds.includes(booster.discord_id)
     );
 
+    // Format the names for display with a limit of 10 per category
+    const formatBoosterList = (boosters, maxDisplay = 10) => {
+      if (boosters.length === 0) return "None";
+      
+      const displayNames = boosters.slice(0, maxDisplay).map(booster => 
+        booster.discord_name || `<${booster.discord_id}>`
+      );
+      
+      let result = displayNames.join('\n• ');
+      if (boosters.length > maxDisplay) {
+        result += `\n• ...and ${boosters.length - maxDisplay} more`;
+      }
+      
+      return `• ${result}`;
+    };
+
+    // Format the names for Discord members
+    const formatDiscordMemberList = (members, maxDisplay = 10) => {
+      if (members.size === 0) return "None";
+      
+      const displayMembers = Array.from(members.values()).slice(0, maxDisplay).map(member => 
+        member.user.username || `<${member.user.id}>`
+      );
+      
+      let result = displayMembers.join('\n• ');
+      if (members.size > maxDisplay) {
+        result += `\n• ...and ${members.size - maxDisplay} more`;
+      }
+      
+      return `• ${result}`;
+    };
+
     // Show confirmation with buttons
     const confirmEmbed = new EmbedBuilder()
       .setTitle('Booster Sync Confirmation')
       .setColor(Colors.WARNING)
       .setDescription(
         `**The following changes will be made:**\n\n` +
-        `• Add ${boostersToAdd.size} new boosters\n` +
-        `• Deactivate ${boostersToDeactivate.length} boosters\n` +
-        `• Reactivate ${boostersToReactivate.length} boosters\n\n` +
+        `**Add ${boostersToAdd.size} new boosters:**\n${formatDiscordMemberList(boostersToAdd)}\n\n` +
+        `**Deactivate ${boostersToDeactivate.length} boosters:**\n${formatBoosterList(boostersToDeactivate)}\n\n` +
+        `**Reactivate ${boostersToReactivate.length} boosters:**\n${formatBoosterList(boostersToReactivate)}\n\n` +
         `Do you want to continue?`
       )
-      .setTimestamp();
     
     // Create confirmation buttons
     const confirmButton = new ButtonBuilder()

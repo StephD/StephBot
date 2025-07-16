@@ -13,10 +13,6 @@ export const data = [
     .setDescription('Testing commands!')
     .addSubcommand(subcommand =>
       subcommand
-        .setName('secret')
-        .setDescription('Replies with a secret message')
-    ).addSubcommand(subcommand =>
-      subcommand
         .setName('buttons')
         .setDescription('Replies with a button')
     ).addSubcommand(subcommand =>
@@ -26,41 +22,6 @@ export const data = [
   ).setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 ];
 
-// add those commands to data if dev
-if (isDev) {
-  data.push(
-    new SlashCommandBuilder()
-      .setName('onlyadmin')
-      .setDescription('Replies with a secret message')
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-  
-    new SlashCommandBuilder()
-      .setName('onlymod')
-      .setDescription('Replies with a secret message')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-  
-    new SlashCommandBuilder()
-      .setName('onlybooster')
-      .setDescription('Replies with a secret message'),
-  
-    new SlashCommandBuilder()
-      .setName('api')
-      .setDescription('Tests an external API and returns the response')
-      .addStringOption(option => 
-        option.setName('url')
-            .setDescription('The URL of the API to test')
-            .setRequired(true)
-        ).setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-  );
-}
-
-const cmdSecret = async (interaction, client) => {
-  await interaction.reply({ 
-    content: 'This is a secret message!', 
-    flags: ['Ephemeral'] 
-  });
-}
-
 // Execute function that handles both commands
 export async function execute(interaction, client) {
   const commandName = interaction.commandName;
@@ -68,9 +29,7 @@ export async function execute(interaction, client) {
   
   // Handle secret command
   if (commandName === 'test') {
-    if (subcommand === 'secret') {
-      await cmdSecret(interaction, client);
-    }
+
     if (subcommand === 'buttons') {
       // Create an embed
       const embed = new EmbedBuilder()
@@ -321,72 +280,6 @@ export async function execute(interaction, client) {
           console.error('Error in collector end handler:', error);
         }
       });
-    }
-  }
-
-  // Handle onlyadmin command
-  else if (isDev && commandName === 'onlyadmin') {
-    await interaction.reply('You are an admin!', {
-      color: Colors.ADMIN
-    });
-  }
-
-  // Handle onlymod command
-  else if (isDev && commandName === 'onlymod') {
-    await interaction.reply('You are a moderator!', {
-      color: Colors.MODERATOR
-    });
-  }
-
-  // Handle onlybooster command
-  else if (isDev && commandName === 'onlybooster') {
-    // Check if the user is a server booster
-    if (interaction.member.premiumSince) {
-      await interaction.reply('You are a booster! Thank you for supporting the server!');
-    } else {
-      await interaction.reply({ 
-        content: 'This command is only available to server boosters.', 
-        flags: ['Ephemeral'] 
-      });
-    }
-  }
-    
-  // Handle api command
-  else if (isDev && commandName === 'api') {
-    try {
-      // Get the URL from the command options
-      const apiUrl = interaction.options.getString('url');
-      
-      // Send an initial response to acknowledge the command
-      await interaction.deferReply();
-      
-      // Call the external API
-      const apiResponse = await callExternalApi(apiUrl);
-      
-      // Prepare the response content
-      let responseContent;
-      if (apiResponse.success) {
-        // Format the response data using the utility function
-        const truncatedData = formatApiResponse(apiResponse.data);
-        responseContent = `API Response:\n\`\`\`json\n${truncatedData}\n\`\`\``;
-      } else {
-        responseContent = `Error calling API: ${apiResponse.error || 'Unknown error'}`;
-      }
-      
-      // Send the follow-up message with the API response
-      await interaction.editReply({
-        content: responseContent
-      });
-      
-    } catch (error) {
-      console.error('Error handling api command:', error);
-      
-      // Send error response
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply(`Error: ${error.message}`);
-      } else {
-        await interaction.reply({ content: `Error: ${error.message}`, flags: ['Ephemeral'] });
-      }
     }
   }
 }

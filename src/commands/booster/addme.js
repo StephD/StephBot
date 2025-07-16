@@ -16,12 +16,11 @@ export async function executeAddMe(interaction, client) {
         .setTimestamp();
       return interaction.reply({
         embeds: [errorEmbed],
-        flags: ['Ephemeral']
       });
     }
     
     // Defer reply as the operation might take time
-    await interaction.deferReply({ flags: ['Ephemeral'] });
+    await interaction.deferReply();
     
     // Get the Discord user information
     const user = interaction.user;
@@ -45,30 +44,25 @@ export async function executeAddMe(interaction, client) {
     );
     
     if (result.success) {
-      // Create a success embed
       const successEmbed = new EmbedBuilder()
         .setTitle('Booster Added')
         .setColor(Colors.SUCCESS)
         .setDescription(result.message)
         .addFields(
-          { name: 'Discord User', value: `<@${discordId}> (${discordName})`, inline: true },
+          { name: 'Discord User', value: `<@${discordId}>`, inline: true },
           { name: 'Nickname', value: nickname, inline: true },
           { name: 'In-Game ID', value: gameId, inline: true },
-          { name: 'Booster Status', value: premiumSince ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true } 
+          { name: 'Booster Status', value: premiumSince ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true },
+          { name: 'Boost Since', value: premiumSince ? new Date(premiumSince).toLocaleDateString() : 'Unknown', inline: true }
         )
-        .setTimestamp();
       
-      // Edit the deferred reply with the success embed
       await interaction.editReply({ embeds: [successEmbed] });
     } else {
-      // Create an error embed
       const errorEmbed = new EmbedBuilder()
         .setTitle('Error Adding Booster')
         .setColor(Colors.ERROR)
         .setDescription(result.message)
-        .setTimestamp();
       
-      // Edit the deferred reply with the error embed
       await interaction.editReply({ embeds: [errorEmbed] });
     }
   } catch (error) {
@@ -80,8 +74,7 @@ export async function executeAddMe(interaction, client) {
         await interaction.editReply(`Error: ${error.message}`);
       } else {
         await interaction.reply({ 
-          content: `Error: ${error.message}`, 
-          flags: ['Ephemeral'] 
+          content: `Error: ${error.message}` 
         });
       }
     } catch (responseError) {
