@@ -219,3 +219,22 @@ export async function updateBoosterGameId(discordId, discordName, gameId, premiu
     return { success: false, message: `Failed to update booster: ${error.message}` };
   }
 }
+
+// update booster active status
+export async function updateBoosterActive(discordId, active) {
+  try {
+    const { data, error } = await supabase
+      .from('boosters')
+      .update({ active })
+      .eq('discord_id', discordId)
+      .select()
+      .single();
+      
+    if (error) throw new Error(error.message);
+    
+    return { success: true, message: 'Booster active status updated successfully', data };
+  } catch (error) {
+    console.error('Error updating booster active status:', error);
+    return { success: false, message: `Failed to update booster active status: ${error.message}` };
+  }
+}

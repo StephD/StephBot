@@ -1,11 +1,17 @@
 export const name = 'guildMemberUpdate';
 export const once = false;
 
+import { updateBoosterActive } from '../supabase/booster.js';
+
 // Check if we're in development mode
 const isDev = process.env.NODE_ENV === 'development';
 
 // Custom booster role name for testing
 const CUSTOM_BOOSTER_ROLE_NAME = 'Booster';
+// booster-log channel name
+const BOOSTER_LOG_CHANNEL_NAME = 'booster-log';
+// booster channel name
+const BOOSTER_CHANNEL_NAME = 'booster-only';
 
 export async function execute(oldMember, newMember, client) {
   try {
@@ -14,6 +20,8 @@ export async function execute(oldMember, newMember, client) {
       console.log(`\n[DEV] guildMemberUpdate event triggered`);
       console.log(`[DEV] Member: ${newMember.user.tag} (${newMember.id})`);
     }
+
+    const boosterLogChannel = newMember.guild.channels.cache.find(channel => channel.name === BOOSTER_LOG_CHANNEL_NAME);
     
     // Check if roles were added
     if (oldMember.roles.cache.size < newMember.roles.cache.size) {
@@ -38,10 +46,13 @@ export async function execute(oldMember, newMember, client) {
       
       // Helper function to handle the boost
       async function handleBoost(newMember, client, role) {
-        console.log(`${newMember.user.username} just boosted the server!`);
+        // send log message
+        if (boosterLogChannel) {
+          await boosterLogChannel.send(`🎉 ${newMember.user.tag} just boosted the server!`);
+        }
         
         // Get the booster-specific channel
-        const boosterChannel = newMember.guild.channels.cache.get('1390238588410793984');
+        const boosterChannel = newMember.guild.channels.cache.get(BOOSTER_CHANNEL_NAME);
         
         if (isDev) {
           console.log(`[DEV] Looking for booster channel: ${boosterChannel ? 'Found' : 'Not found'}`);
@@ -50,23 +61,24 @@ export async function execute(oldMember, newMember, client) {
           }
         }
         
-        if (boosterChannel) {
-          // Send a welcome message in the booster channel
-          const welcomeMessage = `🎉 Welcome ${newMember.user} to the booster club! Thank you for supporting our server!\n\n`;
-          
-          await boosterChannel.send(welcomeMessage);
-          console.log(`Sent welcome message in channel ${boosterChannel.name} for ${newMember.user.tag}`);
+        // Check if we should send a channel message
+        const sendChannelMsg = false; // You can set this to false if you don't want channel messages
+        
+        if (boosterChannel && sendChannelMsg) {
+          await boosterChannel.send(`🎉 Welcome ${newMember.user} to the booster club! Thank you for supporting our server!\n\n`);
         }
                 
+        // Check if we should send a DM
+        const sendDM = true; // You can set this to false if you don't want DMs
+        
         // Send a DM to the user with instructions
-        try {
-          const dmMessage = `Thank you for boosting our server! 💖\n\n` +
-            `If you have any questions, feel free to ask in the booster channel!`;
-          
-          await newMember.user.send(dmMessage);
-          console.log(`Sent DM to ${newMember.user.tag}`);
-        } catch (error) {
-          console.error('Could not send DM to booster:', error);
+        if (sendDM) {
+          try {
+            await newMember.user.send(`Thank you for boosting our server! 💖\n\n` +
+              `If you have any questions, feel free to ask in the booster channel!`);
+          } catch (error) {
+            console.error('Could not send DM to booster:', error);
+          }
         }
       }
     }
@@ -74,6 +86,11 @@ export async function execute(oldMember, newMember, client) {
     // Handle when someone stops boosting (loses the premium subscriber role)
     if (oldMember.roles.cache.size > newMember.roles.cache.size) {
       const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+
+      if (isDev) {
+        console.log(`[DEBUG] Removed roles: ${removedRoles.map(r => r.name).join(', ')}`);
+      }
+
       const premiumRole = newMember.guild.roles.premiumSubscriberRole;
       
       // Check for removed custom Booster role
@@ -81,21 +98,13 @@ export async function execute(oldMember, newMember, client) {
       
       // If either the premium role or custom role was removed, handle the removal
       if ((premiumRole && removedRoles.has(premiumRole.id)) || customBoosterRole) {
-        // Process the removal with one of the roles (prefer premium if both exist)
-        const roleToUse = (premiumRole && removedRoles.has(premiumRole.id)) ? premiumRole : customBoosterRole;
-        await handleBoostRemoval(newMember, client, roleToUse);
-      }
+        if (boosterLogChannel) {
+          await boosterLogChannel.send(`📉 ${newMember.user.tag} is no longer boosting the server.`);
+        }
       
-      // Helper function to handle boost removal
-      async function handleBoostRemoval(newMember, client, role) {
-        console.log(`${newMember.user.username} is no longer boosting the server`);
-        
-        // Send a message to a log channel
-        const logChannel = newMember.guild.channels.cache.get('1395253829905285181');
-        if (logChannel) {
-          const message = `📉 ${newMember.user.tag} is no longer boosting the server.`;
-          await logChannel.send(message);
-          console.log(`Sent boost removal message in log channel for ${newMember.user.tag}`);
+        const { success, message } = await updateBoosterActive(newMember.id, false);
+        if (!success) {
+          console.error('Error updating booster active status:', message);
         }
       }
     }
