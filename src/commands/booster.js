@@ -36,11 +36,11 @@ export const data = [
         .setName('refresh_boosters')
         .setDescription('Sync Discord boosters with database - add missing ones and deactivate removed ones')
     )
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('welcome')
-        .setDescription('Display welcome message with booster registration options')
-    )
+    // .addSubcommand(subcommand =>
+    //   subcommand
+    //     .setName('welcome')
+    //     .setDescription('Display welcome message with booster registration options')
+    // )
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
   ];
 
@@ -77,7 +77,7 @@ export async function execute(interaction, client) {
         await executeDiscordList(interaction, client);
     } else if (subcommand === 'refresh_boosters') {
         await executeRefreshBoosters(interaction, client);
-    } else if (subcommand === 'welcome') {
+    } else if (isDev && subcommand === 'welcome') {
         await executeWelcome(interaction, client);
     }
   }
