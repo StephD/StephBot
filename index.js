@@ -25,10 +25,15 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,  // Required for accessing guild members
-    GatewayIntentBits.GuildPresences  // Required for accessing member presence data
+    GatewayIntentBits.GuildMembers,     // Required for accessing guild members
+    GatewayIntentBits.GuildPresences,   // Required for accessing member presence data
+    GatewayIntentBits.GuildMessageReactions, // Required for detecting reactions on messages
+    GatewayIntentBits.DirectMessages    // Required for DM interactions
   ] 
 });
+
+// Enable partials to allow handling reactions on uncached messages and DMs
+client.options.partials = ['MESSAGE', 'CHANNEL', 'REACTION', 'USER'];
 
 // Initialize commands collection
 client.commands = new Collection();

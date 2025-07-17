@@ -96,7 +96,7 @@ export async function execute(message, client) {
           await message.reply(
             '✅ Thank you! Your game ID has been successfully registered.\n\n' +
             `Game ID: \`${gameId}\`\n\n` +
-            'You can update your game ID at any time by reacting with 📋 to the pinned message again.'
+            'You can update your game ID at any time by reacting with 👍 to the pinned message again.'
           );
           
           // Try to remove the user's reaction from the original message
@@ -107,7 +107,7 @@ export async function execute(message, client) {
               const channel = guild.channels.cache.get(submissionData.channelId);
               if (channel) {
                 const originalMessage = await channel.messages.fetch(submissionData.messageId);
-                const reaction = originalMessage.reactions.cache.find(r => r.emoji.name === '📋');
+                const reaction = originalMessage.reactions.cache.find(r => r.emoji.name === '👍');
                 if (reaction) {
                   await reaction.users.remove(userId);
                   console.log(`Removed reaction from user ${message.author.username} (${userId})`);
