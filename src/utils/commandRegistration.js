@@ -14,7 +14,6 @@ export async function registerCommands(client) {
       return;
     }
 
-    // Create REST instance
     const rest = new REST({ version: '10' }).setToken(config.token);
 
     // Get the main guild ID from config or environment variables

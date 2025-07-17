@@ -12,7 +12,7 @@ export async function execute(client) {
     // Register slash commands when the bot is ready
     await registerCommands(client);
     
-    console.log('Bot initialization complete!');
+    console.log('🚀 Bot initialization complete!');
   } catch (error) {
     console.error('Error in ready event:', error);
   }

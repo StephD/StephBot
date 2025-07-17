@@ -9,7 +9,7 @@ export const data = [
     .addSubcommand(subcommand => subcommand.setName('me')
       .setDescription('Show your booster information'))
     .addSubcommand(subcommand => subcommand.setName('addme')
-      .setDescription('Add yourself to the booster list')
+      .setDescription('Add your gameId to the booster list')
       .addStringOption(option =>
         option
           .setName('game_id')

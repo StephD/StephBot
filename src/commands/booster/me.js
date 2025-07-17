@@ -13,7 +13,7 @@ export async function executeMe(interaction, client) {
     
     // Get the GuildMember object to access roles and premium status
     const member = interaction.member;
-    const premiumSince = member.premiumSinceTimestamp;
+    const premiumSince = member?.premiumSinceTimestamp || null;
     const isPremium = !!premiumSince;
     
     // Get booster data from Supabase

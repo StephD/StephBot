@@ -30,7 +30,7 @@ export async function executeAddMe(interaction, client) {
     // Get the GuildMember object to access nickname and premium status
     const member = interaction.member;
     const nickname = user.globalName || discordName;
-    const premiumSince = member.premiumSinceTimestamp;
+    const premiumSince = member?.premiumSinceTimestamp || null;
     
     console.log(`Adding booster: ${discordId}, ${discordName}, ${gameId}, ${premiumSince}, ${nickname}`);
     
