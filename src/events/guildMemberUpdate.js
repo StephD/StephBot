@@ -11,115 +11,186 @@ const BOOSTER_CHANNEL_NAME = 'booster-only';
 
 export async function execute(oldMember, newMember, client) {
   try {
-    // if (isDev) {
-    //   console.log(`\n[DEV] guildMemberUpdate event triggered`);
-    //   console.log(`[DEV] Member: ${newMember.user.tag} (${newMember.id})`);
-    // }
-
-    const boosterLogChannel = newMember.guild.channels.cache.find(channel => BOOSTER_LOG_CHANNEL_NAME.includes(channel.name));
-    
-    if (oldMember.roles.cache.size < newMember.roles.cache.size) {
-      const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+    let botLogChannel = null;
+    let editDB = true
+    let sendToBoosterChannel = false
+    let sendDM = false
+    try {
+      botLogChannel = newMember.guild.channels.cache.find(channel => 
+        BOOSTER_LOG_CHANNEL_NAME.includes(channel.name) && 
+        channel.permissionsFor(client.user).has(['ViewChannel', 'SendMessages'])
+      );
       
+      if (!botLogChannel) {
+        console.log(`No suitable booster log channel found with proper permissions`);
+      }
+    } catch (error) {
+      console.error('Error finding booster log channel:', error.message);
+    }
+
+    const roleUpdate = oldMember.roles.cache.size !== newMember.roles.cache.size;
+    if (roleUpdate) {
       // if (isDev) {
-      //   console.log(`[DEV] Roles added: ${addedRoles.map(r => r.name).join(', ')}`);
+      //   console.log(`[DEBUG] ---- Role update detected for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
       // }
-      
       const premiumRole = newMember.guild.roles.premiumSubscriberRole;
-      const customBoosterRole = addedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
+      // console.log(`[DEBUG] Premium role: ${premiumRole.name} (${premiumRole.id})`);
 
-      if (isDev) {
-        // console.log(`[DEV] Is premium: ${premiumRole} || Is custom booster: ${customBoosterRole}`);
-      }
+      const isAdd = oldMember.roles.cache.size < newMember.roles.cache.size;
+      const isRemove = oldMember.roles.cache.size > newMember.roles.cache.size;
       
-      if (premiumRole || customBoosterRole) {
-        const roleToUse = premiumRole || customBoosterRole;
-        // if (isDev) {
-        //   console.log(`[DEV] Using role: ${roleToUse.name}`);
-        // }
-        await handleBoost(newMember, client, roleToUse);
-      }
-      
-      async function handleBoost(newMember, client, role) {
-        if (boosterLogChannel) {
-          await boosterLogChannel.send(`🎉 ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName} (${newMember.user.tag}) just boosted the server!\n` + 'Is he premium? ' + (premiumRole?'Yes':'No') + ' || or custom role? ' + (customBoosterRole?'Yes':'No'));
-        }
+      if (isAdd) {
+        const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+        console.log(`[DEBUG] Added roles: ${addedRoles.map(r => r.name).join(', ')}`);
         
-        const boosterChannel = newMember.guild.channels.cache.get(BOOSTER_CHANNEL_NAME);
-                
-        const sendBoosterChannelMsg = false;
-        if (boosterChannel && sendBoosterChannelMsg) {
-          await boosterChannel.send(`🎉 Welcome ${newMember.user.globalName} to the booster club! Thank you for supporting our server!\n\n`);
-        }
-
-        // Add the booster to the database
-        const { success, message } = await createBooster({
-          discordId: newMember.id,
-          discordName: newMember.user.username,
-          gameId: '',
-          premiumSince: newMember.premiumSinceTimestamp,
-          discordNickname: newMember.user.globalName
-        });
-        if (!success) {
-          if (message.includes('already exists')) {
-            const { success, message } = await updateBoosterActive(newMember.id, true);
-            if (!success) {
-              console.error('Error updating booster:', message);
-            } else {
-              await boosterLogChannel.send(`✅ ${newMember.user.globalName} has been enabled to the booster list!`);
-            }
+        const isPremiumAdded = premiumRole && addedRoles.some(role => role.id === premiumRole.id);
+        console.log(`[DEBUG] Is premium role added: ${isPremiumAdded ? 'Yes' : 'No'}`);
+        const customBoosterRole = addedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
+        console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
+        
+        if (isPremiumAdded || customBoosterRole) {
+          console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the booster list`); 
+          
+          const messageNewBoost = `🎉 ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) just boosted the server!\n` + 'Is he premium? ' + (isPremiumAdded ? 'Yes' : 'No') + ' || or custom booster role? ' + (customBoosterRole ? 'Yes' : 'No');
+          
+          if (botLogChannel) {
+            await botLogChannel.send(messageNewBoost);
           } else {
-            console.error('Error creating booster:', message);
+            console.log(messageNewBoost);
           }
-        } else {
-          await boosterLogChannel.send(`✅ ${newMember.user.globalName} has been added to the booster list!`);
-        }
-                
-        const sendDM = false;
-        if (sendDM) {
-          try {
-            await newMember.user.send(`Thank you for boosting our server! 💖\n\n` +
-              `Please answer your game ID so we can add you to the booster list.`);
-          } catch (error) {
-            console.error('Could not send DM to booster:', error);
+          
+          if (sendToBoosterChannel) {
+            try {
+            boosterChannel = newMember.guild.channels.cache.find(channel => 
+              channel.name === BOOSTER_CHANNEL_NAME && 
+              channel.permissionsFor(client.user).has(['ViewChannel', 'SendMessages'])
+            );
+            
+            if (!boosterChannel && isDev) {
+                console.log(`[DEV] No suitable booster channel found with proper permissions`);
+              }
+            } catch (error) {
+              console.error('Error finding booster channel:', error.message);
+            }
+          }
+                  
+          if (editDB) {
+            const { success, message } = await createBooster({
+              discordId: newMember.id,
+              discordName: newMember.user.username,
+              gameId: '',
+              premiumSince: newMember.premiumSinceTimestamp,
+              discordNickname: newMember.user.globalName
+            });
+
+            if (!success) {
+              if (message.includes('already exists')) {
+                console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is already in the booster list`);
+
+                const { success, message } = await updateBoosterActive(newMember.id, true);
+                if (!success) {
+                  console.error('Error updating booster:', message);
+                } else {
+                  const enabledMessage = `✅ ${newMember.user.globalName || newMember.user.username} has been enabled to the booster list!`;
+                  if (botLogChannel) {
+                    await botLogChannel.send(enabledMessage);
+                  }else{
+                    console.log(enabledMessage);
+                  }
+                }
+              } else {
+                console.error('Error creating booster:', message);
+              }
+            } else {
+              const addedMessage = `✅ ${newMember.user.globalName || newMember.user.username} has been added to the booster list!`;
+              if (botLogChannel) {
+                await botLogChannel.send(addedMessage);
+              }else{
+                console.log(addedMessage);
+              }
+            }
+          }
+
+          if (sendDM) {
+            try {
+              await newMember.user.send(`Thank you for boosting our server! 💖\n\n` +
+                `Please answer your game ID so we can add you to the booster list.`);
+            } catch (error) {
+              console.error('Could not send DM to booster:', error);
+            }
           }
         }
       }
-    }
-    
-    if (oldMember.roles.cache.size > newMember.roles.cache.size) {
-      const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+      
+      if (isRemove) {
+        const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+        console.log(`[DEBUG] Removed roles: ${removedRoles.map(r => r.name).join(', ')}`);
+        
+        const isPremiumRemoved = premiumRole && removedRoles.some(role => role.id === premiumRole.id);
+        console.log(`[DEBUG] Is premium role removed: ${isPremiumRemoved ? 'Yes' : 'No'}`); 
+        const customBoosterRole = removedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
+        console.log(`[DEBUG] Is custom booster role removed: ${customBoosterRole ? 'Yes' : 'No'}`);
+        
+        if (isPremiumRemoved || customBoosterRole) {
+          console.log(`[DEBUG] I will remove ${newMember.user.globalName || newMember.user.username} from the booster list`);
 
-      // if (isDev) {
-      //   console.log(`[DEBUG] Removed roles: ${removedRoles.map(r => r.name).join(', ')}`);
-      // }
-
-      const premiumRole = newMember.guild.roles.premiumSubscriberRole;
-      const customBoosterRole = removedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
-      
-      // if (isDev) {
-      //   console.log(`[DEBUG] Is premium: ${premiumRole} || Is custom booster: ${customBoosterRole}`);
-      // }
-      
-      if (premiumRole || customBoosterRole) {
-        if (boosterLogChannel) {
-          await boosterLogChannel.send(`📉 ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName} (${newMember.user.tag}) is no longer boosting the server!\n` + 'Is he premium? ' + (premiumRole?'Yes':'No') + ' || Is custom booster? ' + (customBoosterRole?'Yes':'No'));
-        }
-      
-        const { success, message } = await updateBoosterActive(newMember.id, false);
-        if (!success) {
-          console.error('Error updating booster active status:', message);
-        } else {
-          await boosterLogChannel.send(`✅ ${newMember.user.globalName} has been disabled from the booster list!`);
+          const unboostMessage = `❌ ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) is no longer boosting the server!\n` + 'Is premium removed? ' + (isPremiumRemoved?'Yes':'No') + ' || Is custom booster removed? ' + (customBoosterRole?'Yes':'No');
+                        
+          if (botLogChannel) {
+            await botLogChannel.send(unboostMessage);
+          }else{
+            console.log(unboostMessage);
+          }
+        
+          if (editDB) {
+            const { success, message } = await updateBoosterActive(newMember.id, false);
+            if (!success) {
+              console.error('Error updating booster active status:', message);
+            }
+          }
+          
+          const disabledMessage = `✅ ${newMember.user.globalName || newMember.user.username} has been disabled from the booster list!`;
+          if (botLogChannel) {
+            await botLogChannel.send(disabledMessage);
+          }else{
+            console.log(disabledMessage);
+          }
         }
       }
-    }
+    }  
   } catch (error) {
     console.error('Error in guildMemberUpdate event:', error);
+    
+    // Specific handling for Missing Access error
+    if (error.code === 50001) {
+      console.error('Missing Access error: The bot does not have the required permissions to perform this action.');
+      console.error('Please ensure the bot has proper permissions in the server and channels.');
+      
+      // Log additional context for Missing Access errors
+      if (isDev) {
+        console.error(`[DEV] Guild ID: ${newMember?.guild?.id || 'Unknown'}`);
+        console.error(`[DEV] Guild Name: ${newMember?.guild?.name || 'Unknown'}`);
+        console.error(`[DEV] Bot permissions in guild: ${newMember?.guild?.members?.me?.permissions?.toArray().join(', ') || 'Unknown'}`);
+        
+        // Log available channels and bot permissions in each
+        const channels = newMember?.guild?.channels?.cache;
+        if (channels) {
+          console.error(`[DEV] Available channels and permissions:`);
+          channels.forEach(channel => {
+            const perms = channel.permissionsFor(client.user);
+            if (perms) {
+              console.error(`[DEV] - ${channel.name} (${channel.id}): ${perms.toArray().join(', ')}`);
+            }
+          });
+        }
+      }
+    }
+    
     if (isDev) {
       console.error('[DEV] Detailed error information:');
       console.error(`[DEV] Error name: ${error.name}`);
       console.error(`[DEV] Error message: ${error.message}`);
+      console.error(`[DEV] Error code: ${error.code || 'N/A'}`);
       console.error(`[DEV] Stack trace: ${error.stack}`);
     }
   }
