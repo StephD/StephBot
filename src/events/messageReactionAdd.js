@@ -7,49 +7,103 @@ import { getBoosterByDiscordId, updateBoosterGameId } from '../supabase/booster.
 // This helps us track which users we're expecting DM responses from
 const pendingGameIdSubmissions = new Map();
 
+// Channel configuration defining allowed channels and their properties
+const CHANNEL_NAMES = [
+  'booster-only',
+  'booster-commands',
+  'playground-main-chat'
+];
+
+// The list of channel names where reactions are processed
+const ALLOWED_REACTION_CHANNELS = CHANNEL_NAMES;
+
 export async function execute(reaction, user, client) {
-  console.log(`[DEBUG] messageReactionAdd event triggered for user: ${user.tag || user.username} (${user.id})`);
+  // Define development mode flag
+  const isDev = process.env.NODE_ENV === 'development';
+  return;
+  
+  // Super verbose logging only in development mode
+  if (isDev) {
+    console.log(`[DEV] User Tag: ${user.tag || 'N/A'}`);
+    console.log(`[DEV] Emoji: ${reaction.emoji.name} (ID: ${reaction.emoji.id || 'Standard emoji'})`);
+    console.log(`[DEV] Message content preview: ${reaction.message.content ? reaction.message.content.substring(0, 30) + '...' : '[No content/embed]'}`);
+    console.log(`[DEV] Channel: #${reaction.message.channel.name} (${reaction.message.channel.id})`);
+  }
+
   try {
     // Don't process reactions from bots
     if (user.bot) return;
     
-    // Check if this is a partial reaction (from an old message)
+    // Check if this is a partial reaction or message (from an old message)
     // If it is, fetch the complete data
-    if (reaction.partial) {
+    if (reaction.partial || reaction.message.partial) {
+      if (isDev) console.log('[DEV] Detected partial reaction or message, fetching complete data...');
       try {
         await reaction.fetch();
+        if (reaction.message.partial) {
+          await reaction.message.fetch();
+        }
       } catch (error) {
-        console.error('Error fetching partial reaction:', error);
+        console.error('Error fetching partial data:', error);
+        if (isDev) {
+          console.error('[DEV] Error details:');
+          console.error(`[DEV] Name: ${error.name}`);
+          console.error(`[DEV] Message: ${error.message}`);
+          console.error(`[DEV] Stack: ${error.stack}`);
+        }
         return;
       }
+      if (isDev) console.log('[DEV] Successfully fetched complete data');
     }
 
-    // Check if the reaction is 📋 (clipboard emoji)
-    console.log(`[DEBUG] Reaction emoji: ${reaction.emoji.name} (looking for 📋)`); 
-    if (reaction.emoji.name === '📋') {
+    // Check if the reaction is ⭐ (star emoji)
+    if (isDev) console.log(`[DEV] Reaction emoji: ${reaction.emoji.name} (looking for ⭐)`); 
+    if (reaction.emoji.name === '⭐') {
+      // Check if the reaction is in one of the allowed channels by name
+      const channelName = reaction.message.channel.name;
+      if (!ALLOWED_REACTION_CHANNELS.includes(channelName)) {
+        if (isDev) console.log(`[DEV] Reaction is not in an allowed channel. Channel: #${channelName}`);
+        return;
+      }
+      if (isDev) console.log(`[DEV] Reaction is in an allowed channel #${channelName} ✓`);
+      
       // Check if the message is pinned
       const message = reaction.message;
-      console.log(`[DEBUG] Message pinned status: ${message.pinned}`);
+      if (isDev) {
+        console.log(`[DEV] Message pinned status: ${message.pinned}`);
+        console.log(`[DEV] Message creation time: ${new Date(message.createdTimestamp).toISOString()}`);
+        console.log(`[DEV] Message author: ${message.author ? message.author.tag : 'Unknown'} (${message.author ? message.author.id : 'Unknown'})`);
+      }
+      
       if (!message.pinned) {
-        console.log(`[DEBUG] Message is not pinned, ignoring reaction`);
+        if (isDev) console.log(`[DEV] Message is not pinned, ignoring reaction`);
         return;
       }
       
       // Get the guild member who reacted
       const guild = reaction.message.guild;
-      console.log(`[DEBUG] Guild ID: ${guild.id}, Guild Name: ${guild.name}`);
+      if (isDev) {
+        console.log(`[DEV] Guild ID: ${guild.id}, Guild Name: ${guild.name}`);
+        console.log(`[DEV] Guild member count: ${guild.memberCount}`);
+        console.log(`[DEV] Guild owner: ${guild.ownerId}`);
+      }
+      
       const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id);
-      console.log(`[DEBUG] Member fetched: ${member.displayName} (${member.id})`);
+      if (isDev) {
+        console.log(`[DEV] Member fetched: ${member.displayName} (${member.id})`);
+        console.log(`[DEV] Member joined: ${new Date(member.joinedTimestamp).toISOString()}`);
+        console.log(`[DEV] Member roles: ${member.roles.cache.map(r => r.name).join(', ')}`);
+      }
       
       // Check if user is a booster (has premium subscriber role)
       const premiumRole = guild.roles.premiumSubscriberRole;
       if (!premiumRole || !member.roles.cache.has(premiumRole.id)) {
         // Not a booster, remove their reaction
-        console.log(`User ${user.username} (${user.id}) is not a booster, removing clipboard reaction`);
+        console.log(`User ${user.username} (${user.id}) is not a booster, removing star reaction`);
         await reaction.users.remove(user.id);
         return;
       } else {
-        console.log(`User ${user.username} (${user.id}) is a booster, allowing clipboard reaction`);
+        console.log(`User ${user.username} (${user.id}) is a booster, allowing star reaction`);
       }
       
       // Check if the user is already in the database
@@ -95,6 +149,13 @@ export async function execute(reaction, user, client) {
     }
   } catch (error) {
     console.error('Error in messageReactionAdd event:', error);
+    if (isDev) {
+      console.error('[DEV] Detailed error information:');
+      console.error(`[DEV] Error name: ${error.name}`);
+      console.error(`[DEV] Error message: ${error.message}`);
+      console.error(`[DEV] Stack trace: ${error.stack}`);
+      console.error(`[DEV] Error occurred at: ${new Date().toISOString()}`);
+    }
   }
 }
 

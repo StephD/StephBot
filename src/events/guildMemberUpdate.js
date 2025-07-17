@@ -75,7 +75,7 @@ export async function execute(oldMember, newMember, client) {
         if (sendDM) {
           try {
             await newMember.user.send(`Thank you for boosting our server! 💖\n\n` +
-              `If you have any questions, feel free to ask in the booster channel!`);
+              `Please answer your game ID so we can add you to the booster list.`);
           } catch (error) {
             console.error('Could not send DM to booster:', error);
           }
