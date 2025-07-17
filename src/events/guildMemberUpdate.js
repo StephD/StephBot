@@ -22,7 +22,7 @@ export async function execute(oldMember, newMember, client) {
       );
       
       if (!botLogChannel) {
-        console.log(`No suitable booster log channel found with proper permissions`);
+        // console.log(`No suitable booster log channel found with proper permissions`);
       }
     } catch (error) {
       console.error('Error finding booster log channel:', error.message);
@@ -30,11 +30,8 @@ export async function execute(oldMember, newMember, client) {
 
     const roleUpdate = oldMember.roles.cache.size !== newMember.roles.cache.size;
     if (roleUpdate) {
-      // if (isDev) {
-      //   console.log(`[DEBUG] ---- Role update detected for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
-      // }
+      console.log(`[DEBUG] ---- Role update detected for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
       const premiumRole = newMember.guild.roles.premiumSubscriberRole;
-      // console.log(`[DEBUG] Premium role: ${premiumRole.name} (${premiumRole.id})`);
 
       const isAdd = oldMember.roles.cache.size < newMember.roles.cache.size;
       const isRemove = oldMember.roles.cache.size > newMember.roles.cache.size;
@@ -44,20 +41,19 @@ export async function execute(oldMember, newMember, client) {
         console.log(`[DEBUG] Added roles: ${addedRoles.map(r => r.name).join(', ')}`);
         
         const isPremiumAdded = premiumRole && addedRoles.some(role => role.id === premiumRole.id);
-        console.log(`[DEBUG] Is premium role added: ${isPremiumAdded ? 'Yes' : 'No'}`);
         const customBoosterRole = addedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
-        console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
         
         if (isPremiumAdded || customBoosterRole) {
           console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the booster list`); 
+          console.log(`[DEBUG] Is premium role added: ${isPremiumAdded ? 'Yes' : 'No'}`);
+          console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
           
           const messageNewBoost = `🎉 ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) just boosted the server!\n` + 'Is he premium? ' + (isPremiumAdded ? 'Yes' : 'No') + ' || or custom booster role? ' + (customBoosterRole ? 'Yes' : 'No');
           
           if (botLogChannel) {
             await botLogChannel.send(messageNewBoost);
-          } else {
-            console.log(messageNewBoost);
           }
+          console.log(messageNewBoost);
           
           if (sendToBoosterChannel) {
             try {
@@ -127,20 +123,19 @@ export async function execute(oldMember, newMember, client) {
         console.log(`[DEBUG] Removed roles: ${removedRoles.map(r => r.name).join(', ')}`);
         
         const isPremiumRemoved = premiumRole && removedRoles.some(role => role.id === premiumRole.id);
-        console.log(`[DEBUG] Is premium role removed: ${isPremiumRemoved ? 'Yes' : 'No'}`); 
         const customBoosterRole = removedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
-        console.log(`[DEBUG] Is custom booster role removed: ${customBoosterRole ? 'Yes' : 'No'}`);
         
         if (isPremiumRemoved || customBoosterRole) {
           console.log(`[DEBUG] I will remove ${newMember.user.globalName || newMember.user.username} from the booster list`);
+          console.log(`[DEBUG] Is premium role removed: ${isPremiumRemoved ? 'Yes' : 'No'}`); 
+          console.log(`[DEBUG] Is custom booster role removed: ${customBoosterRole ? 'Yes' : 'No'}`);
 
           const unboostMessage = `❌ ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) is no longer boosting the server!\n` + 'Is premium removed? ' + (isPremiumRemoved?'Yes':'No') + ' || Is custom booster removed? ' + (customBoosterRole?'Yes':'No');
                         
           if (botLogChannel) {
             await botLogChannel.send(unboostMessage);
-          }else{
-            console.log(unboostMessage);
           }
+          console.log(unboostMessage);
         
           if (editDB) {
             const { success, message } = await updateBoosterActive(newMember.id, false);
