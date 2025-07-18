@@ -6,30 +6,31 @@ import { isValidGameId } from '../utils/index.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 
-// Array of cursed words to detect (only in development mode)
+// Array of bad words and negative language to detect (only in development mode)
 const CURSED_WORDS = [
-  'cursed', 'haunted', 'demonic', 'possessed', 'spooky', 'creepy',
-  'eerie', 'ominous', 'sinister', 'macabre', 'ghastly', 'horrifying',
-  'nightmare', 'unsettling', 'disturbing', 'eldritch', 'abomination'
+  'fuck', 'fk', 'shit', 'damn', 'ass', 'asshole', 'bitch',
+  'wtf', 'stfu', 'crap', 'hell', 'idiot', 'stupid', 'dumb', 'loser',
+  'garbage', 'trash', 'worthless', 'useless', 'sucks', 'terrible', 'awful',
+  'hate', 'worst', 'pathetic', 'disgusting', 'nasty', 'bs', 'bullshit', 'fu', 'fck', 'fck'
 ];
 
-// Array of cursed responses (only in development mode)
+// Array of sassy responses to bad language (only in development mode)
 const CURSED_RESPONSES = [
-  'I sense a cursed presence in your message... 👻',
-  'Your words have summoned something unspeakable... 🌑',
-  'The void stares back at your message... 👁️',
-  'Your text carries an ancient curse now... ⛓️',
-  'I feel a dark energy emanating from your words... 🕯️',
-  'Your message has been marked by the abyss... 🔮',
-  'Something wicked echoes in your text... 🧿',
-  'Your words have twisted reality slightly... ⚰️',
-  'The spirits are disturbed by your message... 👥',
-  'Your text bears the mark of the forbidden... 📜',
-  'Whispers follow in the wake of your words... 🌫️',
-  'Your message has opened a door that should remain closed... 🚪',
-  'Even the shadows shy away from your text... 🕸️',
-  'Your words carry whispers from beyond... 🪦',
-  'The code between realities weakens with your message... ⌨️'
+  'Whoa there! Someone\'s feeling spicy today... 🌶️',
+  'Did your keyboard just get possessed by a sailor? 🧂',
+  'I see you\'ve chosen violence today... 💢',
+  'That\'s quite the colorful vocabulary you\'ve got there! 🌈',
+  'Someone woke up and chose chaos this morning... ⚡',
+  'Your message is rated R for Really unnecessary language... 🙄',
+  'I\'m going to pretend I didn\'t see that... 👀',
+  'Who hurt you today? Need to talk about it? 🤔',
+  'That\'s a lot of negative energy for one message... 📉',
+  'Do you kiss your mother with that mouth? 💋',
+  'Yikes! Maybe take a deep breath? 😮‍💨',
+  'Let\'s try that again but with 100% less attitude... 📝',
+  'Detected: Keyboard rage in progress... 💻💥',
+  'Your autocorrect must be having a meltdown right now... 🔥',
+  'My poor innocent circuits weren\'t prepared for that... 🤖'
 ];
 
 // Array of compliments for random responses
@@ -86,7 +87,13 @@ function getRandomCompliment() {
  */
 function hasCursedContent(messageContent) {
   const lowerCaseMessage = messageContent.toLowerCase();
-  return CURSED_WORDS.some(word => lowerCaseMessage.includes(word));
+  
+  // Create a regex pattern to match whole words only (with word boundaries)
+  return CURSED_WORDS.some(word => {
+    // Create a regex with word boundaries (\b) to match only whole words
+    const wordRegex = new RegExp(`\\b${word}\\b`, 'i');
+    return wordRegex.test(lowerCaseMessage);
+  });
 }
 
 /**
@@ -106,12 +113,14 @@ export async function execute(message, client) {
   try {
     // Ignore messages from bots
     if (message.author.bot) return;
+    let funCursed = false
+    let funCompliment = true
     
     // In development mode only
     if (isDev) {
       try {
         // Check for cursed content first
-        if (hasCursedContent(message.content)) {
+        if (funCursed && hasCursedContent(message.content)) {
           const cursedResponse = getRandomCursedResponse();
           await message.reply(cursedResponse);
           // Early return to prevent other responses for cursed messages
@@ -119,7 +128,7 @@ export async function execute(message, client) {
         }
         
         // If not cursed, randomly send a compliment (1/10 chance)
-        if (Math.floor(Math.random() * 10) === 0) {
+        if (funCompliment && Math.floor(Math.random() * 10) === 0) {
           const compliment = getRandomCompliment();
           await message.reply(`✨ ${compliment} ✨`);
         }
