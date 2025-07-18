@@ -5,6 +5,33 @@ import { updateBoosterGameId } from '../supabase/booster.js';
 import { isValidGameId } from '../utils/index.js';
 
 const isDev = process.env.NODE_ENV === 'development';
+
+// Array of cursed words to detect (only in development mode)
+const CURSED_WORDS = [
+  'cursed', 'haunted', 'demonic', 'possessed', 'spooky', 'creepy',
+  'eerie', 'ominous', 'sinister', 'macabre', 'ghastly', 'horrifying',
+  'nightmare', 'unsettling', 'disturbing', 'eldritch', 'abomination'
+];
+
+// Array of cursed responses (only in development mode)
+const CURSED_RESPONSES = [
+  'I sense a cursed presence in your message... 👻',
+  'Your words have summoned something unspeakable... 🌑',
+  'The void stares back at your message... 👁️',
+  'Your text carries an ancient curse now... ⛓️',
+  'I feel a dark energy emanating from your words... 🕯️',
+  'Your message has been marked by the abyss... 🔮',
+  'Something wicked echoes in your text... 🧿',
+  'Your words have twisted reality slightly... ⚰️',
+  'The spirits are disturbed by your message... 👥',
+  'Your text bears the mark of the forbidden... 📜',
+  'Whispers follow in the wake of your words... 🌫️',
+  'Your message has opened a door that should remain closed... 🚪',
+  'Even the shadows shy away from your text... 🕸️',
+  'Your words carry whispers from beyond... 🪦',
+  'The code between realities weakens with your message... ⌨️'
+];
+
 // Array of compliments for random responses
 const COMPLIMENTS = [
   "You're absolutely amazing!",
@@ -52,6 +79,25 @@ function getRandomCompliment() {
   return COMPLIMENTS[randomIndex];
 }
 
+/**
+ * Checks if a message contains cursed content
+ * @param {string} messageContent - The message content to check
+ * @returns {boolean} True if the message contains cursed content
+ */
+function hasCursedContent(messageContent) {
+  const lowerCaseMessage = messageContent.toLowerCase();
+  return CURSED_WORDS.some(word => lowerCaseMessage.includes(word));
+}
+
+/**
+ * Get a random cursed response
+ * @returns {string} A random cursed response
+ */
+function getRandomCursedResponse() {
+  const randomIndex = Math.floor(Math.random() * CURSED_RESPONSES.length);
+  return CURSED_RESPONSES[randomIndex];
+}
+
 export async function execute(message, client) {
   // Log all messages received for debugging
   // if (process.env.NODE_ENV === 'development') {
@@ -61,12 +107,25 @@ export async function execute(message, client) {
     // Ignore messages from bots
     if (message.author.bot) return;
     
-    // In development mode, randomly send a compliment (1/50 chance)
+    // In development mode only
     if (isDev) {
-      // Roll a dice (1/50 chance)
-      if (Math.floor(Math.random() * 10) === 0) {
-        const compliment = getRandomCompliment();
-        await message.reply(`✨ ${compliment} ✨`);
+      try {
+        // Check for cursed content first
+        if (hasCursedContent(message.content)) {
+          const cursedResponse = getRandomCursedResponse();
+          await message.reply(cursedResponse);
+          // Early return to prevent other responses for cursed messages
+          return;
+        }
+        
+        // If not cursed, randomly send a compliment (1/10 chance)
+        if (Math.floor(Math.random() * 10) === 0) {
+          const compliment = getRandomCompliment();
+          await message.reply(`✨ ${compliment} ✨`);
+        }
+      } catch (error) {
+        console.error('Error in dev mode message handling:', error);
+        // Continue execution - don't let dev features break core functionality
       }
     }
     
