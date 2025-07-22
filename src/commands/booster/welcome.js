@@ -3,6 +3,8 @@ import { Colors } from '../../utils/colors.js';
 import { executeMe } from './me.js';
 import { updateBoosterGameId } from '../../supabase/booster.js';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 // Process the game ID from the modal submission
 async function processGameIdFromModal(interaction, gameId, client) {
   try {
@@ -20,7 +22,9 @@ async function processGameIdFromModal(interaction, gameId, client) {
     const nickname = user.globalName || discordName;
     const premiumSince = member ? member.premiumSinceTimestamp : null;
     
-    console.log(`Adding booster from modal: ${discordId}, ${discordName}, ${gameId}, ${premiumSince}, ${nickname}`);
+    if (isDev) {
+      console.log(`Adding booster from modal: ${discordId}, ${discordName}, ${gameId}, ${premiumSince}, ${nickname}`);
+    }
     
     // Call the function to create/update the booster in Supabase
     const result = await updateBoosterGameId(

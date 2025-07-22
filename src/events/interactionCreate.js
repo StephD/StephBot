@@ -17,7 +17,7 @@ export async function execute(interaction, client) {
     }
 
     try {
-      console.log(`Executing command: ${interaction.commandName}`);
+      // console.log(`Executing command: ${interaction.commandName}`);
       await command.execute(interaction, client);
     } catch (error) {
       console.error(`Error executing ${interaction.commandName} command:`, error);
@@ -38,7 +38,7 @@ export async function execute(interaction, client) {
   else if (interaction.isButton()) {
     // Button interactions are handled by collectors in their respective commands
     // This section would be for any global buttons not tied to a specific command
-    console.log(`Button interaction received: ${interaction.customId}`);
+    // console.log(`Button interaction received: ${interaction.customId}`);
   }
   
   // Handle other interaction types as needed

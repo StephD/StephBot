@@ -89,7 +89,7 @@ export async function executeAddMe(interaction, client) {
         const logEmbed = new EmbedBuilder()
           .setColor(Colors.BOOSTER)
           .setTitle('💎 Booster Game ID Added')
-          .setDescription(`**${nickname}** has added their game ID using the /booster addme command`)
+          .setDescription(`**${nickname}** has added their game ID using the **/booster addme** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
             { name: 'Nickname', value: nickname, inline: true },
@@ -115,7 +115,7 @@ export async function executeAddMe(interaction, client) {
         const errorLogEmbed = new EmbedBuilder()
           .setColor(Colors.ERROR)
           .setTitle('❌ Booster Game ID Error')
-          .setDescription(`Failed to add game ID for **${nickname}** using the /booster addme command`)
+          .setDescription(`Failed to add game ID for **${nickname}** using the **/booster addme** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
             { name: 'Nickname', value: nickname, inline: true },
