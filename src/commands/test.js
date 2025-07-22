@@ -7,7 +7,7 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // Export an array of command data objects
 // Commands will only be included if we're in development mode
-export const data = [
+export const data = isDev ? [
   new SlashCommandBuilder()
     .setName('test')
     .setDescription('Testing commands!')
@@ -20,7 +20,7 @@ export const data = [
         .setName('modal')
         .setDescription('Replies with a modal')
   ).setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-];
+] : [];
 
 // Execute function that handles both commands
 export async function execute(interaction, client) {

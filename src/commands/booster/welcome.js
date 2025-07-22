@@ -82,8 +82,8 @@ export async function executeWelcome(interaction, client) {
       .setDescription('Thank you for supporting our server! Please let us know your game ID or check your current status.')
       .setColor(Colors.SUCCESS)
       .addFields(
-        { name: 'Check Status', value: 'Click the "Me" button to view your current booster information.', inline: true },
-        { name: 'Register Game ID', value: 'Click the "Add Me" button to register your game ID.', inline: true }
+        { name: 'My Status', value: 'Click the "My Status" button to view your current booster information.', inline: true },
+        { name: 'Add me', value: 'Click the "Add me" button to register your game ID.', inline: true }
       )
       .setFooter({ text: 'Thank you for your support!' })
       .setTimestamp();
@@ -91,12 +91,12 @@ export async function executeWelcome(interaction, client) {
     // Create buttons
     const meButton = new ButtonBuilder()
       .setCustomId('welcome_me_button')
-      .setLabel('Me')
+      .setLabel('My Status')
       .setStyle(ButtonStyle.Primary);
     
     const addMeButton = new ButtonBuilder()
       .setCustomId('welcome_addme_button')
-      .setLabel('Add Me')
+      .setLabel('Add me')
       .setStyle(ButtonStyle.Success);
     
     // Add buttons to an action row

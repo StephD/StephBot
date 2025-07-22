@@ -6,7 +6,7 @@ import { Colors } from '../utils/colors.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 const CUSTOM_BOOSTER_ROLE_NAME = 'Booster';
-const BOOSTER_LOG_CHANNEL_NAME = ['bot-logs', 'booster-log', 'bot-test'];
+const BOOSTER_LOG_CHANNEL_NAME = ['booster-log'];
 const BOOSTER_CHANNEL_NAME = 'booster-only'; 
 
 export async function execute(oldMember, newMember, client) {
@@ -22,7 +22,7 @@ export async function execute(oldMember, newMember, client) {
       );
       
       if (!botLogChannel) {
-        // console.log(`No suitable booster log channel found with proper permissions`);
+        console.log(`No suitable booster log channel found with proper permissions`);
       }
     } catch (error) {
       console.error('Error finding booster log channel:', error.message);
