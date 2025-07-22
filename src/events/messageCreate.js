@@ -8,10 +8,23 @@ const isDev = process.env.NODE_ENV === 'development';
 
 // Array of bad words and negative language to detect (only in development mode)
 const CURSED_WORDS = [
+  // Common curse words
   'fuck', 'fk', 'shit', 'damn', 'ass', 'asshole', 'bitch',
   'wtf', 'stfu', 'crap', 'hell', 'idiot', 'stupid', 'dumb', 'loser',
   'garbage', 'trash', 'worthless', 'useless', 'sucks', 'terrible', 'awful',
-  'hate', 'worst', 'pathetic', 'disgusting', 'nasty', 'bs', 'bullshit', 'fu', 'fck', 'fck'
+  'hate', 'worst', 'pathetic', 'disgusting', 'nasty', 'bs', 'bullshit', 'fu', 'fck',
+  
+  // Sexual terms
+  'boobs', 'dick', 'penis', 'vagina', 'pussy', 'cock', 'tits', 'nipples',
+  'cum', 'jizz', 'sperm', 'semen', 'orgasm', 'horny', 'masturbate', 'blowjob', 'suck',
+  'handjob', 'anal', 'dildo', 'vibrator', 'fleshlight', 'buttplug', 'bdsm',
+  'bondage', 'fetish', 'kink', 'erection', 'erect', 'precum', 'climax',
+  'ejaculate', 'hentai', 'porn', 'pornography', 'xxx', 'nsfw', 'milf',
+  'whore', 'slut', 'hooker', 'prostitute', 'escort', 'stripper', 'nude',
+  'naked', 'fap', 'wank', 'fingering', 'rimjob', 'creampie', 'gangbang',
+  'orgy', 'threesome', 'foursome', 'cunt', 'twat', 'prick', 'ballsack',
+  'testicle', 'scrotum', 'anus', 'rectum', 'taint', 'groin', 'clit', 'clitoris',
+  'labia', 'vulva', 'foreskin', 'shaft', 'balls', 'nutsack', 'jerk off'
 ];
 
 // Array of sassy responses to bad language (only in development mode)
@@ -81,18 +94,53 @@ function getRandomCompliment() {
 }
 
 /**
+ * Normalize text by replacing common leetspeak/number substitutions
+ * @param {string} text - The text to normalize
+ * @returns {string} Normalized text
+ */
+function normalizeLeetspeak(text) {
+  return text
+    .replace(/0/g, 'o')
+    .replace(/1/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/4/g, 'a')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/8/g, 'b')
+    .replace(/ph/g, 'f')
+    .replace(/@/g, 'a')
+    .replace(/\$/g, 's')
+    .replace(/!/g, 'i')
+    .replace(/\+/g, 't')
+    .replace(/\(/g, 'c')
+    .replace(/\)/g, 'o')
+    .replace(/v4g/g, 'vag')
+    .replace(/p3n/g, 'pen')
+    .replace(/d1c/g, 'dic')
+    .replace(/b00/g, 'boo')
+    .replace(/t1t/g, 'tit');
+}
+
+/**
  * Checks if a message contains cursed content
  * @param {string} messageContent - The message content to check
+ * @param {string} userId - The user ID to check special handling for
  * @returns {boolean} True if the message contains cursed content
  */
-function hasCursedContent(messageContent) {
-  const lowerCaseMessage = messageContent.toLowerCase();
+function hasCursedContent(messageContent, userId) {
+  // First normalize the message to catch leetspeak variations
+  const normalizedMessage = normalizeLeetspeak(messageContent.toLowerCase());
   
-  // Create a regex pattern to match whole words only (with word boundaries)
+  // Special handling for specific user ID - allow curse words to be part of other words
+  if (userId === '138637909933686784') {
+    return CURSED_WORDS.some(word => normalizedMessage.includes(word));
+  }
+  
+  // For everyone else, create a regex pattern to match whole words only (with word boundaries)
   return CURSED_WORDS.some(word => {
     // Create a regex with word boundaries (\b) to match only whole words
     const wordRegex = new RegExp(`\\b${word}\\b`, 'i');
-    return wordRegex.test(lowerCaseMessage);
+    return wordRegex.test(normalizedMessage);
   });
 }
 
@@ -114,13 +162,27 @@ export async function execute(message, client) {
     // Ignore messages from bots
     if (message.author.bot) return;
     let funCursed = false
-    let funCompliment = true
+    let funCompliment = false
     
     // In development mode only
     if (isDev) {
       try {
+        const userId = message.author.id;
+        
         // Check for cursed content first
-        if (funCursed && hasCursedContent(message.content)) {
+        if (funCursed && hasCursedContent(message.content, userId)) {
+          // Special handling for specific user ID
+          if (userId === '138637909933686784') {
+            // Delete the message silently
+            try {
+              await message.delete();
+            } catch (error) {
+              console.error('Error deleting message from special user:', error);
+            }
+            return;
+          }
+          
+          // Regular response for other users
           const cursedResponse = getRandomCursedResponse();
           await message.reply(cursedResponse);
           // Early return to prevent other responses for cursed messages
@@ -186,7 +248,7 @@ export async function execute(message, client) {
       }
         
       if (!isValidGameId(gameId)) {
-        await message.reply('⚠️ Your game ID seems too short. Please provide a valid game ID that is at least 28 characters long.');
+        await message.reply('⚠️ Your game ID seems too short or incorrect. Please provide a valid game ID that is at least 28 characters long and only contains letters and numbers.');
         return;
       }
       

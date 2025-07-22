@@ -14,7 +14,7 @@ export async function execute(oldMember, newMember, client) {
     let botLogChannel = null;
     let editDB = true
     let sendToBoosterChannel = false
-    let sendDM = false
+    let sendDM = true
     try {
       botLogChannel = newMember.guild.channels.cache.find(channel => 
         BOOSTER_LOG_CHANNEL_NAME.includes(channel.name) && 
@@ -47,6 +47,9 @@ export async function execute(oldMember, newMember, client) {
           console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the booster list`); 
           console.log(`[DEBUG] Is premium role added: ${isPremiumAdded ? 'Yes' : 'No'}`);
           console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
+          // is the user real premium?
+          const isPremium = newMember.premiumSinceTimestamp;
+          console.log(`[DEBUG] Is real premium: ${isPremium ? 'Yes' : 'No'}`);
           
           const messageNewBoost = `🎉 ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) just boosted the server!\n` + 'Is he premium? ' + (isPremiumAdded ? 'Yes' : 'No') + ' || or custom booster role? ' + (customBoosterRole ? 'Yes' : 'No');
           

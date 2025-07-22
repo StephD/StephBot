@@ -6,9 +6,9 @@ export const data = [
   new SlashCommandBuilder()
     .setName('booster')
     .setDescription('Commands for managing boosters')
-    .addSubcommand(subcommand => subcommand.setName('me')
+    .addSubcommand(subcommand => subcommand.setName('my-status')
       .setDescription('Show your booster information'))
-    .addSubcommand(subcommand => subcommand.setName('addme')
+    .addSubcommand(subcommand => subcommand.setName('add-me')
       .setDescription('Add your gameId to the booster list')
       .addStringOption(option =>
         option
@@ -36,11 +36,11 @@ export const data = [
         .setName('refresh_boosters')
         .setDescription('Sync Discord boosters with database - add missing ones and deactivate removed ones')
     )
-    // .addSubcommand(subcommand =>
-    //   subcommand
-    //     .setName('welcome')
-    //     .setDescription('Display welcome message with booster registration options')
-    // )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('welcome')
+        .setDescription('Display welcome message with booster registration options')
+    )
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
   ];
 
@@ -49,10 +49,10 @@ export async function execute(interaction, client) {
   const subcommand = interaction.options.getSubcommand();
   
   if (commandName === 'booster') {
-    if (subcommand === 'me') {
+    if (subcommand === 'my-status') {
       await executeMe(interaction, client);
     }
-    else if (subcommand === 'addme') {
+    else if (subcommand === 'add-me') {
       await executeAddMe(interaction, client);
     }
   }

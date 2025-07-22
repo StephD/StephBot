@@ -13,6 +13,6 @@ export async function execute(interaction, client) {
   // Handle hello command
   if (commandName === 'hello') {
     const env = process.env.NODE_ENV === 'development' ? 'dev' : '';
-    await interaction.reply('👋 Hello ' + env + ' ! This is a basic Discord bot response.');
+    await interaction.reply('👋 Hello ' + env + ' Buddy ! I am here to assist you :-)');
   }
 }
