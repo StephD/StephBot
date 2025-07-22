@@ -78,8 +78,8 @@ export async function executeWelcome(interaction, client) {
   try {
     // Create an embed message
     const embed = new EmbedBuilder()
-      .setTitle('Welcome to the Booster Channel!')
-      .setDescription('Thank you for supporting our server! Please let us know your game ID or check your current status.')
+      .setTitle('Thank you, Guardian, for supporting our server! 💖')
+      .setDescription('Please let us know your game ID so we can send you the monthly perk. You can also click the button below to check your booster status.')
       .setColor(Colors.SUCCESS)
       .addFields(
         { name: 'My Status', value: 'Click the "My Status" button to view your current booster information.', inline: true },
