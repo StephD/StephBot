@@ -3,8 +3,12 @@ export const once = false;
 
 import { updateBoosterGameId } from '../supabase/booster.js';
 import { isValidGameId } from '../utils/index.js';
+import { EmbedBuilder } from 'discord.js';
+import { Colors } from '../utils/colors.js';
 
 const isDev = process.env.NODE_ENV === 'development';
+const CUSTOM_BOOSTER_ROLE_NAME = 'Booster';
+const BOOSTER_LOG_CHANNEL_NAME = ['booster-log'];
 
 // Array of bad words and negative language to detect (only in development mode)
 const CURSED_WORDS = [
@@ -248,7 +252,12 @@ export async function execute(message, client) {
       }
         
       if (!isValidGameId(gameId)) {
-        await message.reply('⚠️ Your game ID seems too short or incorrect. Please provide a valid game ID that is at least 28 characters long and only contains letters and numbers.');
+        // embed error  
+        const errorEmbed = new EmbedBuilder()
+          .setColor(Colors.ERROR)
+          .setTitle('❌ Invalid Game ID')
+          .setDescription('⚠️ Your game ID seems too short or incorrect. Please provide a valid game ID that is at least 28 characters long and only contains letters and numbers.')
+        await message.reply({ embeds: [errorEmbed] });
         return;
       }
       
@@ -264,21 +273,93 @@ export async function execute(message, client) {
         message.author.premiumSince,
         message.author.globalName
       );
+      
+      // Initialize botLogChannel
+      let botLogChannel = null;
+      
+      // For DMs, we need to search all guilds since message.guild is null
+      try {
+        // Search through all guilds the bot is in to find a booster-log channel
+        for (const guild of message.client.guilds.cache.values()) {
+          const foundChannel = guild.channels.cache.find(channel => 
+            BOOSTER_LOG_CHANNEL_NAME.includes(channel.name) && 
+            channel.permissionsFor(message.client.user).has(['ViewChannel', 'SendMessages'])
+          );
+          
+          if (foundChannel) {
+            botLogChannel = foundChannel;
+            break; // Stop searching once we find a suitable channel
+          }
+        }
+        
+        if (!botLogChannel) {
+          console.log(`No suitable booster log channel found with proper permissions`);
+        }
+      } catch (error) {
+        console.error('Error finding booster log channel:', error.message);
+      }
         
       if (success) {
-        await message.reply(
-          '✅ Thank you! Your game ID has been successfully registered.\n\n' +
-          `Game ID: \`${gameId}\`\n\n`
-        );
+        // Send a nicer DM response with embed
+        const successEmbed = new EmbedBuilder()
+          .setColor(Colors.SUCCESS)
+          .setTitle('✅ Game ID Successfully Registered')
+          .setDescription('Thank you! Your game ID has been added to our booster database.')
+          // .addFields(
+          //   { name: 'What\'s Next?', value: 'You\'re all set! Your booster perks will be activated shortly.', inline: false }
+          // )
+          .setFooter({ text: 'Thank you for supporting our server!' })
+          
+        await message.reply({ embeds: [successEmbed] });
           
         if(isDev) {
           console.log(`User ${message.author.username} (${userId}) registered game ID: ${gameId}`);
         }
+        
+        // Send embed to booster-log channel if found
+        if (botLogChannel) {
+          const logEmbed = new EmbedBuilder()
+            .setColor(Colors.BOOSTER)
+            .setTitle('💎 Booster Game ID Added via DM')
+            .setDescription(`**${message.author.globalName || message.author.username}** has added their game ID via direct message`)
+            .addFields(
+              { name: 'User', value: `<@${userId}> (${message.author.tag})`, inline: true },
+              { name: 'In-Game ID', value: gameId, inline: true },
+              { name: 'Database Status', value: '✅ Successfully added to database', inline: false }
+            )
+            .setFooter({ text: 'Booster database updated successfully' })
+          
+          await botLogChannel.send({ embeds: [logEmbed] });
+        }
       } else {
-        await message.reply(
-          '❌ Sorry, there was an error saving your game ID. Please try again later or contact an admin.\n\n' +
-          `Error: ${dbMessage}`
-        );
+        // Send error embed as DM response
+        const errorEmbed = new EmbedBuilder()
+          .setColor(Colors.ERROR)
+          .setTitle('❌ Error Saving Game ID')
+          .setDescription('Sorry, there was an error saving your game ID.')
+          .addFields(
+            { name: 'Error Details', value: dbMessage, inline: false },
+            { name: 'What to Do', value: 'Please try again later or contact a server admin for assistance.', inline: false }
+          )
+          
+        await message.reply({ embeds: [errorEmbed] });
+        
+        // Send error embed to booster-log channel if found
+        if (botLogChannel) {
+          const errorLogEmbed = new EmbedBuilder()
+            .setColor(Colors.ERROR)
+            .setTitle('❌ Booster Game ID Error via DM')
+            .setDescription(`Failed to add game ID for **${message.author.globalName || message.author.username}** via direct message`)
+            .addFields(
+              { name: 'User', value: `<@${userId}> (${message.author.tag})`, inline: true },
+              { name: 'Attempted Game ID', value: gameId, inline: true },
+              { name: 'Error', value: dbMessage, inline: false }
+            )
+            .setFooter({ text: 'Database operation failed' })
+            .setTimestamp();
+          
+          await botLogChannel.send({ embeds: [errorLogEmbed] });
+        }
       }
     }
   } catch (error) {

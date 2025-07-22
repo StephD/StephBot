@@ -77,7 +77,7 @@ export async function execute(interaction, client) {
         await executeDiscordList(interaction, client);
     } else if (subcommand === 'refresh_boosters') {
         await executeRefreshBoosters(interaction, client);
-    } else if (isDev && subcommand === 'welcome') {
+    } else if (subcommand === 'welcome') {
         await executeWelcome(interaction, client);
     }
   }

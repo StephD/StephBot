@@ -47,6 +47,51 @@ async function processGameIdFromModal(interaction, gameId, client) {
       
       // Send the success embed as a reply
       await interaction.editReply({ embeds: [successEmbed] });
+
+      // Send a message to the booster log channel
+      // bot log channel
+      let botLogChannel = null;
+      
+      // Check if the interaction is from a guild or DM
+      if (interaction.guild) {
+        // If in a guild, find the booster-log channel in that guild
+        botLogChannel = interaction.guild.channels.cache.find(channel => channel.name === 'booster-log');
+      } else {
+        // If in a DM, search all guilds the bot is in to find a booster-log channel
+        try {
+          for (const guild of client.guilds.cache.values()) {
+            const foundChannel = guild.channels.cache.find(channel => 
+              channel.name === 'booster-log' && 
+              channel.permissionsFor(client.user).has(['ViewChannel', 'SendMessages'])
+            );
+            
+            if (foundChannel) {
+              botLogChannel = foundChannel;
+              break; // Stop searching once we find a suitable channel
+            }
+          }
+        } catch (error) {
+          console.error('Error finding booster log channel:', error.message);
+        }
+      }
+      // Send a nice embed to the booster-log channel
+      if (botLogChannel) {
+        const logEmbed = new EmbedBuilder()
+          .setColor(Colors.BOOSTER)
+          .setTitle('💎 Booster Game ID Added')
+          .setDescription(`**${nickname}** added their game ID using the **/booster welcome** command`)
+          .addFields(
+            { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
+            { name: 'Nickname', value: nickname, inline: true },
+            { name: 'In-Game ID', value: gameId, inline: true },
+            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
+            { name: 'Database Status', value: '✅ Successfully added to database', inline: true }
+          )
+          .setFooter({ text: 'Booster database updated successfully' })
+          .setTimestamp();
+        
+        await botLogChannel.send({ embeds: [logEmbed] });
+      }
     } else {
       // Create an error embed
       const errorEmbed = new EmbedBuilder()
@@ -79,7 +124,7 @@ export async function executeWelcome(interaction, client) {
     // Create an embed message
     const embed = new EmbedBuilder()
       .setTitle('Thank you, Guardian, for supporting our server! 💖')
-      .setDescription('Please let us know your game ID so we can send you the monthly perk. You can also click the button below to check your booster status.')
+      .setDescription('Use the commands below to register your game ID so we can send you the monthly perk or to check your booster status.')
       .setColor(Colors.SUCCESS)
       .addFields(
         { name: 'My Status', value: 'Click the "My Status" button to view your current booster information.', inline: true },

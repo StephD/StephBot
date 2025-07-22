@@ -3,6 +3,7 @@ export const once = false;
 
 import { updateBoosterActive, createBooster } from '../supabase/booster.js';
 import { Colors } from '../utils/colors.js';
+import { EmbedBuilder } from 'discord.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 const CUSTOM_BOOSTER_ROLE_NAME = 'Booster';
@@ -30,7 +31,7 @@ export async function execute(oldMember, newMember, client) {
 
     const roleUpdate = oldMember.roles.cache.size !== newMember.roles.cache.size;
     if (roleUpdate) {
-      console.log(`[DEBUG] ---- Role update detected for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
+      // console.log(`[DEBUG] ---- Role update detected for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
       const premiumRole = newMember.guild.roles.premiumSubscriberRole;
 
       const isAdd = oldMember.roles.cache.size < newMember.roles.cache.size;
@@ -38,42 +39,52 @@ export async function execute(oldMember, newMember, client) {
       
       if (isAdd) {
         const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
-        console.log(`[DEBUG] Added roles: ${addedRoles.map(r => r.name).join(', ')}`);
+        // console.log(`[DEBUG] Added roles: ${addedRoles.map(r => r.name).join(', ')}`);
+        // console.log(`[DEBUG] Added roles IDs: ${addedRoles.map(r => r.id).join(', ')}`);
         
-        const isPremiumAdded = premiumRole && addedRoles.some(role => role.id === premiumRole.id);
+        const isPremiumRoleAdded = premiumRole && addedRoles.some(role => role.id === premiumRole.id);
         const customBoosterRole = addedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
+        const premiumSince = newMember.premiumSinceTimestamp;
         
-        if (isPremiumAdded || customBoosterRole) {
-          console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the booster list`); 
-          console.log(`[DEBUG] Is premium role added: ${isPremiumAdded ? 'Yes' : 'No'}`);
+        if (isPremiumRoleAdded || customBoosterRole) {
+          console.log(`[DEBUG] ---- Premium Role added for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
+          console.log(`[DEBUG] Is premium role added: ${isPremiumRoleAdded ? 'Yes' : 'No'}`);
           console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
-          // is the user real premium?
-          const isPremium = newMember.premiumSinceTimestamp;
-          console.log(`[DEBUG] Is real premium: ${isPremium ? 'Yes' : 'No'}`);
+          console.log(`[DEBUG] Is he real premium: ${premiumSince ? 'Yes' : 'No'}`);
           
-          const messageNewBoost = `🎉 ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) just boosted the server!\n` + 'Is he premium? ' + (isPremiumAdded ? 'Yes' : 'No') + ' || or custom booster role? ' + (customBoosterRole ? 'Yes' : 'No');
+          // Create a nice embed for boost added
+          const boostAddedEmbed = new EmbedBuilder()
+            .setColor(Colors.SUCCESS)
+            .setTitle('🎉 Server Boost Added!')
+            .setDescription(`**${newMember.user.globalName || newMember.user.username}** just boosted the server!`)
+            .addFields(
+              { name: 'User', value: `<@${newMember.id}> (${newMember.user.tag})`, inline: true },
+              { name: 'Booster Status', value: premiumSince ? `✅ Since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
+              { name: 'Role added Details', value: `Premium Role: ${isPremiumRoleAdded ? '✅' : '❌'}\nCustom Role: ${customBoosterRole ? '✅' : '❌'}` }
+            )
           
           if (botLogChannel) {
-            await botLogChannel.send(messageNewBoost);
+            await botLogChannel.send({ embeds: [boostAddedEmbed] });
           }
-          console.log(messageNewBoost);
+          console.log(`🎉 ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) just boosted the server!`);
           
-          if (sendToBoosterChannel) {
-            try {
-            boosterChannel = newMember.guild.channels.cache.find(channel => 
-              channel.name === BOOSTER_CHANNEL_NAME && 
-              channel.permissionsFor(client.user).has(['ViewChannel', 'SendMessages'])
-            );
-            
-            if (!boosterChannel && isDev) {
-                console.log(`[DEV] No suitable booster channel found with proper permissions`);
-              }
-            } catch (error) {
-              console.error('Error finding booster channel:', error.message);
-            }
-          }
-                  
+          // if (sendToBoosterChannel) {
+          //   try {
+          //     boosterChannel = newMember.guild.channels.cache.find(channel => 
+          //       channel.name === BOOSTER_CHANNEL_NAME && 
+          //       channel.permissionsFor(client.user).has(['ViewChannel', 'SendMessages'])
+          //     );
+              
+          //     if (!boosterChannel && isDev) {
+          //       console.log(`[DEV] No suitable booster channel found with proper permissions`);
+          //     }
+          //   } catch (error) {
+          //     console.error('Error finding booster channel:', error.message);
+          //   }
+          // }
+          
           if (editDB) {
+            console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the DB booster list`); 
             const { success, message } = await createBooster({
               discordId: newMember.id,
               discordName: newMember.user.username,
@@ -84,29 +95,79 @@ export async function execute(oldMember, newMember, client) {
 
             if (!success) {
               if (message.includes('already exists')) {
-                console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is already in the booster list`);
+                console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is already in the booster list, just updating the booster active status`);
 
-                const { success, message } = await updateBoosterActive(newMember.id, true);
+                if (premiumSince) {
+                  console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is premium, updating the booster active status to true`);
+                } else {
+                  console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is not a real premium, updating the booster active status to false`);
+                }
+
+                const { success, message } = await updateBoosterActive(newMember.id, premiumSince);
                 if (!success) {
                   console.error('Error updating booster:', message);
-                } else {
-                  const enabledMessage = `✅ ${newMember.user.globalName || newMember.user.username} has been enabled to the booster list!`;
+                  
+                  // Create error embed
+                  const dbErrorEmbed = new EmbedBuilder()
+                    .setColor(Colors.ERROR)
+                    .setTitle('❌ Database Update Failed')
+                    .setDescription(`Failed to update booster status for **${newMember.user.globalName || newMember.user.username}**`)
+                    .addFields({ name: 'Error', value: message })
+                    
                   if (botLogChannel) {
-                    await botLogChannel.send(enabledMessage);
-                  }else{
-                    console.log(enabledMessage);
+                    await botLogChannel.send({ embeds: [dbErrorEmbed] });
                   }
+                } else {
+                  // Create success embed
+                  const dbSuccessEmbed = new EmbedBuilder()
+                    .setColor(Colors.INFO)
+                    .setTitle('✅ Database Update Successful')
+                    // the user already exist in the DB
+                    .setDescription(`The user already exist in the DB, just updating the booster status\n**${newMember.user.globalName || newMember.user.username}** has been **updated** in the database`)
+                    .addFields(
+                      { name: 'User', value: `<@${newMember.id}> (${newMember.user.tag})`, inline: true },
+                      { name: 'Database Status', value: '✅ ENABLED', inline: true },
+                      { name: 'Booster Perks', value: 'Active', inline: true }
+                    )
+                    .setFooter({ text: 'Booster database updated successfully' })
+                  
+                  if (botLogChannel) {
+                    await botLogChannel.send({ embeds: [dbSuccessEmbed] });
+                  }
+                  console.log(`✅ ${newMember.user.globalName || newMember.user.username} has been enabled to the booster list!`);
                 }
               } else {
                 console.error('Error creating booster:', message);
+                
+                // Create error embed
+                const dbErrorEmbed = new EmbedBuilder()
+                  .setColor(Colors.ERROR)
+                  .setTitle('❌ Database Update Failed')
+                  .setDescription(`Failed to add **${newMember.user.globalName || newMember.user.username}** to the booster list`)
+                  .addFields({ name: 'Error', value: message })
+                  
+                if (botLogChannel) {
+                  await botLogChannel.send({ embeds: [dbErrorEmbed] });
+                }
               }
             } else {
-              const addedMessage = `✅ ${newMember.user.globalName || newMember.user.username} has been added to the booster list!`;
+              // Create a database success embed
+              const dbSuccessEmbed = new EmbedBuilder()
+                .setColor(Colors.SUCCESS)
+                .setTitle('✅ Database Created Successful')
+                .setDescription(`**${newMember.user.globalName || newMember.user.username}** has been **added** to the booster list`)
+                .addFields(
+                  { name: 'User', value: `<@${newMember.id}> (${newMember.user.tag})`, inline: true },
+                  { name: 'Premium', value: premiumSince ? '✅' : '❌', inline: true },
+                  { name: 'Database Status', value: '✅ CREATED', inline: true },
+                  { name: 'Booster Perks', value: 'Active', inline: true }
+                )
+                .setFooter({ text: 'Booster database updated successfully' })
+              
               if (botLogChannel) {
-                await botLogChannel.send(addedMessage);
-              }else{
-                console.log(addedMessage);
+                await botLogChannel.send({ embeds: [dbSuccessEmbed] });
               }
+              console.log(`✅ ${newMember.user.globalName || newMember.user.username} has been added to the booster list!`);
             }
           }
 
@@ -123,35 +184,67 @@ export async function execute(oldMember, newMember, client) {
       
       if (isRemove) {
         const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
-        console.log(`[DEBUG] Removed roles: ${removedRoles.map(r => r.name).join(', ')}`);
+        // console.log(`[DEBUG] Removed roles: ${removedRoles.map(r => r.name).join(', ')}`);
         
-        const isPremiumRemoved = premiumRole && removedRoles.some(role => role.id === premiumRole.id);
+        const isPremiumRoleRemoved = premiumRole && removedRoles.some(role => role.id === premiumRole.id);
         const customBoosterRole = removedRoles.find(role => role.name === CUSTOM_BOOSTER_ROLE_NAME);
+        const premiumSince = newMember.premiumSinceTimestamp;
         
-        if (isPremiumRemoved || customBoosterRole) {
-          console.log(`[DEBUG] I will remove ${newMember.user.globalName || newMember.user.username} from the booster list`);
-          console.log(`[DEBUG] Is premium role removed: ${isPremiumRemoved ? 'Yes' : 'No'}`); 
+        if (isPremiumRoleRemoved || customBoosterRole) {
+          console.log(`[DEBUG] ---- Premium Role removed for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
+          console.log(`[DEBUG] Is premium role removed: ${isPremiumRoleRemoved ? 'Yes' : 'No'}`); 
           console.log(`[DEBUG] Is custom booster role removed: ${customBoosterRole ? 'Yes' : 'No'}`);
 
-          const unboostMessage = `❌ ${new Date().toISOString().split('T')[1]} ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) is no longer boosting the server!\n` + 'Is premium removed? ' + (isPremiumRemoved?'Yes':'No') + ' || Is custom booster removed? ' + (customBoosterRole?'Yes':'No');
-                        
+          // Create a nice embed for boost removed
+          const boostRemovedEmbed = new EmbedBuilder()
+            .setColor(Colors.ERROR)
+            .setTitle('❌ Server Boost Removed')
+            .setDescription(`**${newMember.user.globalName || newMember.user.username}** is no longer boosting the server!`)
+            .addFields(
+              { name: 'User', value: `<@${newMember.id}> (${newMember.user.tag})`, inline: true },
+              { name: 'Booster Status', value: premiumSince ? '✅ Still has premium' : '❌ Premium removed', inline: true },
+              { name: 'Role removed', value: `Premium Role Removed: ${isPremiumRoleRemoved ? '✅' : '❌'}\nCustom Role Removed: ${customBoosterRole ? '✅' : '❌'}` }
+            )
+          
           if (botLogChannel) {
-            await botLogChannel.send(unboostMessage);
+            await botLogChannel.send({ embeds: [boostRemovedEmbed] });
           }
-          console.log(unboostMessage);
+          console.log(`❌ ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) is no longer boosting the server!`);
         
           if (editDB) {
+            console.log(`[DEBUG] I will remove ${newMember.user.globalName || newMember.user.username} from the DB booster list`); 
             const { success, message } = await updateBoosterActive(newMember.id, false);
             if (!success) {
               console.error('Error updating booster active status:', message);
+              
+              // Create error embed
+              const dbErrorEmbed = new EmbedBuilder()
+                .setColor(Colors.ERROR)
+                .setTitle('❌ Database Update Failed')
+                .setDescription(`Failed to update booster status for **${newMember.user.globalName || newMember.user.username}**`)
+                .addFields({ name: 'Error', value: message })
+                
+              if (botLogChannel) {
+                await botLogChannel.send({ embeds: [dbErrorEmbed] });
+              }
+            } else {
+              // Create success embed
+              const dbSuccessEmbed = new EmbedBuilder()
+                .setColor(Colors.INFO)
+                .setTitle('✅ Database Update Successful')
+                .setDescription(`**${newMember.user.globalName || newMember.user.username}** has been **disabled** in the booster list`)
+                .addFields(
+                  { name: 'User', value: `<@${newMember.id}> (${newMember.user.tag})`, inline: true },
+                  { name: 'Database Status', value: '❌ DISABLED', inline: true },
+                  { name: 'Booster Perks', value: 'Inactive', inline: true }
+                )
+                .setFooter({ text: 'Booster database updated successfully' })
+              
+              if (botLogChannel) {
+                await botLogChannel.send({ embeds: [dbSuccessEmbed] });
+              }
+              console.log(`✅ ${newMember.user.globalName || newMember.user.username} has been disabled from the booster list!`);
             }
-          }
-          
-          const disabledMessage = `✅ ${newMember.user.globalName || newMember.user.username} has been disabled from the booster list!`;
-          if (botLogChannel) {
-            await botLogChannel.send(disabledMessage);
-          }else{
-            console.log(disabledMessage);
           }
         }
       }

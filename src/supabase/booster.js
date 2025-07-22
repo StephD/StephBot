@@ -221,11 +221,11 @@ export async function updateBoosterGameId(discordId, discordName, gameId, premiu
 }
 
 // update booster active status
-export async function updateBoosterActive(discordId, active) {
+export async function updateBoosterActive(discordId, premiumSince) {
   try {
     const { data, error } = await supabase
       .from('boosters')
-      .update({ active })
+      .update({ active: premiumSince ? true : false, premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null })
       .eq('discord_id', discordId)
       .select()
       .single();
