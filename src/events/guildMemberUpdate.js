@@ -102,8 +102,8 @@ export async function execute(oldMember, newMember, client) {
                 } else {
                   console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is not a real premium, updating the booster active status to false`);
                 }
-
                 const { success, message } = await updateBoosterActive(newMember.id, premiumSince);
+                
                 if (!success) {
                   console.error('Error updating booster:', message);
                   
@@ -153,7 +153,7 @@ export async function execute(oldMember, newMember, client) {
             } else {
               // Create a database success embed
               const dbSuccessEmbed = new EmbedBuilder()
-                .setColor(Colors.SUCCESS)
+                .setColor(Colors.INFO)
                 .setTitle('✅ Database Created Successful')
                 .setDescription(`**${newMember.user.globalName || newMember.user.username}** has been **added** to the booster list`)
                 .addFields(

@@ -163,7 +163,7 @@ export async function executeWelcome(interaction, client) {
     // Max 24h from discord limits
     const collector = interaction.channel.createMessageComponentCollector({
       filter: i => i.user.id === interaction.user.id && ['welcome_me_button', 'welcome_addme_button'].includes(i.customId),
-      time: 60000 // 1 minute timeout
+      time: 86400000 // 24h timeout
     });
     
     // Handle button clicks
