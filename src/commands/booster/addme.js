@@ -20,7 +20,7 @@ export async function executeAddMe(interaction, client) {
     }
     
     // Defer reply as the operation might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: ['Ephemeral'] });
     
     // Get the Discord user information
     const user = interaction.user;
@@ -76,10 +76,9 @@ export async function executeAddMe(interaction, client) {
         .setDescription(result.message)
         .addFields(
           { name: 'Discord User', value: `<@${discordId}>`, inline: true },
-          { name: 'Nickname', value: nickname, inline: true },
+          // { name: 'Nickname', value: nickname, inline: true },
           { name: 'In-Game ID', value: gameId, inline: true },
-          { name: 'Booster Status', value: premiumSince ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true },
-          { name: 'Boost Since', value: premiumSince ? new Date(premiumSince).toLocaleDateString() : 'Unknown', inline: true }
+          { name: 'Booster Status', value: premiumSince ? `✅ Boosting since ${new Date(premiumSince).toLocaleDateString()}` : '❌ Not currently boosting' }
         )
       
       await interaction.editReply({ embeds: [successEmbed] });
@@ -92,9 +91,9 @@ export async function executeAddMe(interaction, client) {
           .setDescription(`**${nickname}** has added their game ID using the **/booster addme** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
-            { name: 'Nickname', value: nickname, inline: true },
+            // { name: 'Nickname', value: nickname, inline: true },
             { name: 'In-Game ID', value: gameId, inline: true },
-            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
+            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting' },
             { name: 'Database Status', value: '✅ Successfully added to database', inline: true }
           )
           .setFooter({ text: 'Booster database updated successfully' })
@@ -118,7 +117,7 @@ export async function executeAddMe(interaction, client) {
           .setDescription(`Failed to add game ID for **${nickname}** using the **/booster addme** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
-            { name: 'Nickname', value: nickname, inline: true },
+            // { name: 'Nickname', value: nickname, inline: true },
             { name: 'Attempted Game ID', value: gameId, inline: true },
             { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
             { name: 'Error', value: result.message, inline: false }

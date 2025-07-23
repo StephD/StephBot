@@ -43,9 +43,9 @@ async function processGameIdFromModal(interaction, gameId, client) {
         .setDescription(result.message)
         .addFields(
           { name: 'Discord User', value: `<@${discordId}> (${discordName})`, inline: true },
-          { name: 'Nickname', value: nickname, inline: true },
+          // { name: 'Nickname', value: nickname, inline: true },
           { name: 'In-Game ID', value: gameId, inline: true },
-          { name: 'Booster Status', value: premiumSince ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true } 
+          { name: 'Booster Status', value: premiumSince ? `✅ Boosting since ${new Date(premiumSince).toLocaleDateString()}` : '❌ Not currently boosting' }
         )
         .setTimestamp();
       
@@ -86,10 +86,10 @@ async function processGameIdFromModal(interaction, gameId, client) {
           .setDescription(`**${nickname}** added their game ID using the **/booster welcome** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
-            { name: 'Nickname', value: nickname, inline: true },
+            // { name: 'Nickname', value: nickname, inline: true },
             { name: 'In-Game ID', value: gameId, inline: true },
-            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
-            { name: 'Database Status', value: '✅ Successfully added to database', inline: true }
+            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting'},
+            { name: 'Database Status', value: '✅ Successfully added', inline: true }
           )
           .setFooter({ text: 'Booster database updated successfully' })
           .setTimestamp();

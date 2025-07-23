@@ -4,7 +4,7 @@ import { getBoosterByDiscordId } from '../../supabase/booster.js';
 export async function executeMe(interaction, client) {
   try {
     // Defer reply as the operation might take time
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: ['Ephemeral'] });
     
     // Get user information
     const user = interaction.user;
@@ -24,8 +24,7 @@ export async function executeMe(interaction, client) {
       .setTitle('Your Booster Information')
       .setColor(isPremium ? '#f47fff' : '#5865F2') // Pink for premium, Discord blue for non-premium
       .addFields(
-        { name: 'Discord User', value: `<@${discordId}> (${discordId})`, inline: true },
-        { name: 'Username', value: discordName, inline: true },
+        { name: 'Discord User', value: `<@${discordId}> (${discordName})`, inline: true },
         { name: 'Booster Status', value: isPremium ? `Boosting since ${new Date(premiumSince).toLocaleDateString()}` : 'Not boosting', inline: true }
       )
       .setTimestamp();
@@ -37,7 +36,7 @@ export async function executeMe(interaction, client) {
         { name: '📊 Database Information', value: '─────────────────', inline: false },
         { name: 'Game ID', value: result.data.game_id || 'Not set', inline: true },
         { name: 'Booster Since', value: result.data.premium_since ? new Date(result.data.premium_since).toLocaleDateString() : 'Unknown', inline: true }
-      );
+      )
     } else {
       embed.addFields(
         { name: '📊 Database Information', value: 'No records found in database. Use `/booster addme` to register.', inline: false }
