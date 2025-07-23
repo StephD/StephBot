@@ -256,7 +256,7 @@ export async function execute(message, client) {
         const errorEmbed = new EmbedBuilder()
           .setColor(Colors.ERROR)
           .setTitle('❌ Invalid Game ID')
-          .setDescription('⚠️ Your game ID seems too short or incorrect. Please provide a valid game ID that is at least 28 characters long and only contains letters and numbers.')
+          .setDescription('⚠️ Your Game ID is incorrect. You can find and copy it from the loading page or your avatar profile. Please resend your Game ID to me.')
         await message.reply({ embeds: [errorEmbed] });
         return;
       }

@@ -102,7 +102,7 @@ export async function execute(oldMember, newMember, client) {
                 } else {
                   console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is not a real premium, updating the booster active status to false`);
                 }
-                const { success, message } = await updateBoosterActive(newMember.id, premiumSince);
+                const { success, message } = await updateBoosterActive(newMember.id, premiumSince );
                 
                 if (!success) {
                   console.error('Error updating booster:', message);
