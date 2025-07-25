@@ -47,10 +47,10 @@ export async function execute(oldMember, newMember, client) {
         const premiumSince = newMember.premiumSinceTimestamp;
         
         if (isPremiumRoleAdded || customBoosterRole) {
-          console.log(`[DEBUG] ---- Premium Role added for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
-          console.log(`[DEBUG] Is premium role added: ${isPremiumRoleAdded ? 'Yes' : 'No'}`);
-          console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
-          console.log(`[DEBUG] Is he real premium: ${premiumSince ? 'Yes' : 'No'}`);
+          // console.log(`[] ---- Premium Role added for ${newMember.user.globalName || newDEBUGMember.user.username} (${newMember.user.tag})`);
+          // console.log(`[DEBUG] Is premium role added: ${isPremiumRoleAdded ? 'Yes' : 'No'}`);
+          // console.log(`[DEBUG] Is custom booster role added: ${customBoosterRole ? 'Yes' : 'No'}`); 
+          // console.log(`[DEBUG] Is he real premium: ${premiumSince ? 'Yes' : 'No'}`);
           
           // Create a nice embed for boost added
           const boostAddedEmbed = new EmbedBuilder()
@@ -84,7 +84,7 @@ export async function execute(oldMember, newMember, client) {
           // }
           
           if (editDB) {
-            console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the DB booster list`); 
+            // console.log(`[DEBUG] I will add ${newMember.user.globalName || newMember.user.username} to the DB booster list`); 
             const { success, message } = await createBooster({
               discordId: newMember.id,
               discordName: newMember.user.username,
@@ -95,12 +95,12 @@ export async function execute(oldMember, newMember, client) {
 
             if (!success) {
               if (message.includes('already exists')) {
-                console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is already in the booster list, just updating the booster active status`);
+                // console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is already in the booster list, just updating the booster active status`);
 
                 if (premiumSince) {
-                  console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is premium, updating the booster active status to true`);
+                  // console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is premium, updating the booster active status to true`);
                 } else {
-                  console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is not a real premium, updating the booster active status to false`);
+                  // console.log(`[DEBUG] ${newMember.user.globalName || newMember.user.username} is not a real premium, updating the booster active status to false`);
                 }
                 const { success, message } = await updateBoosterActive(newMember.id, premiumSince );
                 
@@ -191,9 +191,9 @@ export async function execute(oldMember, newMember, client) {
         const premiumSince = newMember.premiumSinceTimestamp;
         
         if (isPremiumRoleRemoved || customBoosterRole) {
-          console.log(`[DEBUG] ---- Premium Role removed for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
-          console.log(`[DEBUG] Is premium role removed: ${isPremiumRoleRemoved ? 'Yes' : 'No'}`); 
-          console.log(`[DEBUG] Is custom booster role removed: ${customBoosterRole ? 'Yes' : 'No'}`);
+          // console.log(`[DEBUG] ---- Premium Role removed for ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag})`);
+          // console.log(`[DEBUG] Is premium role removed: ${isPremiumRoleRemoved ? 'Yes' : 'No'}`); 
+          // console.log(`[DEBUG] Is custom booster role removed: ${customBoosterRole ? 'Yes' : 'No'}`);
 
           // Create a nice embed for boost removed
           const boostRemovedEmbed = new EmbedBuilder()
@@ -212,7 +212,7 @@ export async function execute(oldMember, newMember, client) {
           console.log(`❌ ${newMember.user.globalName || newMember.user.username} (${newMember.user.tag}) is no longer boosting the server!`);
         
           if (editDB) {
-            console.log(`[DEBUG] I will remove ${newMember.user.globalName || newMember.user.username} from the DB booster list`); 
+            // console.log(`[DEBUG] I will remove ${newMember.user.globalName || newMember.user.username} from the DB booster list`); 
             const { success, message } = await updateBoosterActive(newMember.id, false);
             if (!success) {
               console.error('Error updating booster active status:', message);

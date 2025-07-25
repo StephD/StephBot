@@ -225,7 +225,11 @@ export async function updateBoosterActive(discordId, premiumSince) {
   try {
     const { data, error } = await supabase
       .from('boosters')
-      .update({ active: premiumSince ? true : false, premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null })
+      .update({ 
+        active: premiumSince ? true : false, 
+        premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
+        updated_at: new Date().toISOString()
+      })
       .eq('discord_id', discordId)
       .select()
       .single();
