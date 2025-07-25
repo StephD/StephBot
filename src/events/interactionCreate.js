@@ -1,3 +1,5 @@
+import { executeWelcome } from '../commands/booster/welcome.js';
+
 export const name = 'interactionCreate';
 export const once = false;
 
@@ -33,16 +35,56 @@ export async function execute(interaction, client) {
     }
   }
   
-  // Handle button interactions
-  // This is just for any future global button handlers that aren't tied to specific commands
+  // Handle button interactions - PERMANENT BUTTONS
   else if (interaction.isButton()) {
-    // Button interactions are handled by collectors in their respective commands
-    // This section would be for any global buttons not tied to a specific command
-    // console.log(`Button interaction received: ${interaction.customId}`);
+    try {
+      // Handle welcome command buttons
+      if (interaction.customId === 'booster_welcome_me' || interaction.customId === 'booster_welcome_addme') {
+        await executeWelcome(interaction, client);
+      }
+      // Add more permanent button handlers here as needed
+      // else if (interaction.customId === 'support_ticket') { ... }
+      // else if (interaction.customId === 'other_button') { ... }
+      else {
+        console.log(`Unhandled button interaction: ${interaction.customId}`);
+      }
+    } catch (error) {
+      console.error(`Error handling button interaction ${interaction.customId}:`, error);
+      
+      const errorReply = { content: 'There was an error processing your request.', flags: ['Ephemeral'] };
+      
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(errorReply);
+      } else {
+        await interaction.reply(errorReply);
+      }
+    }
+  }
+  
+  // Handle modal submissions - PERMANENT MODALS
+  else if (interaction.isModalSubmit()) {
+    try {
+      // Handle welcome command modal submissions
+      if (interaction.customId === 'booster_gameIdModal') {
+        await executeWelcome(interaction, client);
+      }
+      // Add more modal handlers here as needed
+      else {
+        console.log(`Unhandled modal submission: ${interaction.customId}`);
+      }
+    } catch (error) {
+      console.error(`Error handling modal submission ${interaction.customId}:`, error);
+      
+      const errorReply = { content: 'There was an error processing your submission.', flags: ['Ephemeral'] };
+      
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(errorReply);
+      } else {
+        await interaction.reply(errorReply);
+      }
+    }
   }
   
   // Handle other interaction types as needed
   // else if (interaction.isSelectMenu()) { ... }
-  // else if (interaction.isModalSubmit()) { ... }
-  // etc.
 }

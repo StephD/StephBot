@@ -125,145 +125,117 @@ async function processGameIdFromModal(interaction, gameId, client) {
 
 export async function executeWelcome(interaction, client) {
   try {
-    // Create an embed message
-    const embed = new EmbedBuilder()
-      .setTitle('Thank you, Guardian, for supporting our server! 💖')
-      .setDescription('Use the commands below to register your game ID so we can send you the monthly perk or to check your booster status.')
-      .setColor(Colors.SUCCESS)
-      .addFields(
-        { name: 'My Status', value: 'Click the "My Status" button to view your current booster information.', inline: true },
-        { name: 'Add me', value: 'Click the "Add me" button to register your game ID.', inline: true }
-      )
-      .setFooter({ text: 'Thank you for your support!' })
-      .setTimestamp();
-    
-    // Create buttons
-    const meButton = new ButtonBuilder()
-      .setCustomId('welcome_me_button')
-      .setLabel('My Status')
-      .setStyle(ButtonStyle.Primary);
-    
-    const addMeButton = new ButtonBuilder()
-      .setCustomId('welcome_addme_button')
-      .setLabel('Add me')
-      .setStyle(ButtonStyle.Success);
-    
-    // Add buttons to an action row
-    const row = new ActionRowBuilder()
-      .addComponents(meButton, addMeButton);
-    
-    // Send the message with the embed and buttons
-    await interaction.reply({
-      embeds: [embed],
-      components: [row]
-    });
-    
-    // Create a collector for button interactions 
-    // Can add time here if we want
-    // Max 24h from discord limits
-    const collector = interaction.channel.createMessageComponentCollector({
-      filter: i => i.user.id === interaction.user.id && ['welcome_me_button', 'welcome_addme_button'].includes(i.customId),
-      time: 86400000 // 24h timeout
-    });
-    
-    // Handle button clicks
-    collector.on('collect', async i => {
-      if (i.customId === 'welcome_me_button') {
-        // Call the me command functionality
-        await executeMe(i, client);
-      } 
-      else if (i.customId === 'welcome_addme_button') {
-        // Create a modal for game ID input
-        const modal = new ModalBuilder()
-          .setCustomId('game_id_modal')
-          .setTitle('Enter Your Game ID');
-        
-        // Create text input for game ID
-        const gameIdInput = new TextInputBuilder()
-          .setCustomId('game_id_input')
-          .setLabel('Game ID')
-          .setStyle(TextInputStyle.Short)
-          .setPlaceholder('28 characters, letters and numbers only')
-          .setRequired(true)
-          .setMinLength(28)
-          .setMaxLength(28);
-
-        // Add input to the modal
-        const firstActionRow = new ActionRowBuilder().addComponents(gameIdInput);
-        modal.addComponents(firstActionRow);
-        
-        // Show the modal to the user
-        await i.showModal(modal);
-        
-        // Handle modal submission directly with a once event listener
-        // This ensures each modal submission is handled independently
-        // and tied to the specific user who clicked the button
-        client.once('interactionCreate', async (submission) => {
-          // Only process this modal if it's from the same user who clicked the button
-          // This prevents conflicts when multiple users submit modals
-          if (submission.isModalSubmit() && 
-              submission.customId === 'game_id_modal' && 
-              submission.user.id === i.user.id) {
-            const gameId = submission.fields.getTextInputValue('game_id_input');
-            
-            // Validate game_id: must be exactly 28 characters and contain only letters and numbers
-            if (!gameId || gameId.length !== 28 || !/^[a-zA-Z0-9]+$/.test(gameId)) {
-              const errorEmbed = new EmbedBuilder()
-                .setTitle('Error Adding Booster')
-                .setColor(Colors.ERROR)
-                .setDescription('Invalid game ID. The game ID must be exactly 28 characters long and contain only letters and numbers.')
-                .setTimestamp();
-              
-              await submission.editReply({
-                embeds: [errorEmbed]
-              });
-              return;
-            }
-            
-            // Process the game ID directly here instead of using the addme command
-            await processGameIdFromModal(submission, gameId, client);
-          }
-        });
-      }
-    });
-    
-    // Handle collector end
-    collector.on('end', collected => {
-      try {
-        // Disable the buttons when the collector ends
-        const disabledRow = new ActionRowBuilder()
-          .addComponents(
-            ButtonBuilder.from(meButton).setDisabled(true),
-            ButtonBuilder.from(addMeButton).setDisabled(true)
-          );
-        
-        // Update the message with disabled buttons and updated embed
-        // Use fetchReply() to check if the message still exists before trying to edit it
-        interaction.fetchReply().then(reply => {
-          if (reply) {
-            interaction.editReply({
-              content: 'These buttons are no longer active.',
-              components: [disabledRow]
-            }).catch(error => {
-              // If we can't edit the reply, just log it - don't crash
-              console.error('Error updating welcome message after timeout:', error);
-            });
-          }
-        }).catch(error => {
-          // If we can't fetch the reply, the message might have been deleted
-          console.error('Error fetching welcome message for timeout handling:', error);
-        });
-      } catch (error) {
-        console.error('Error in collector end handler:', error);
-      }
-    });
+    // Handle different types of interactions
+    if (interaction.isChatInputCommand()) {
+      // This is the initial slash command - create the permanent message
+      await createWelcomeMessage(interaction);
+    } else if (interaction.isButton()) {
+      // Handle button interactions
+      await handleWelcomeButton(interaction, client);
+    } else if (interaction.isModalSubmit()) {
+      // Handle modal submissions
+      await handleWelcomeModal(interaction, client);
+    }
   } catch (error) {
     console.error('Error executing booster welcome command:', error);
     
+    const errorReply = { content: `Error: ${error.message}`, flags: ['Ephemeral'] };
+    
     if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(`Error: ${error.message}`);
+      await interaction.followUp(errorReply);
     } else {
-      await interaction.reply({ content: `Error: ${error.message}`, flags: [''] });
+      await interaction.reply(errorReply);
     }
+  }
+}
+
+// Create the initial welcome message with permanent buttons
+async function createWelcomeMessage(interaction) {
+  // Create an embed message
+  const embed = new EmbedBuilder()
+    .setTitle('Thank you, Guardians, for supporting our server! 💖')
+    .setDescription('Use the commands below to register your game ID so we can send you the monthly perk or to check your booster status.')
+    .setColor(Colors.SUCCESS)
+    .addFields(
+      { name: 'My Status', value: 'Click the "My Status" button to view your current booster information.', inline: true },
+      { name: 'Add me', value: 'Click the "Add me" button to register your game ID.', inline: true }
+    )
+    .setFooter({ text: 'Thank you for your support! These buttons will work permanently.' })
+    .setTimestamp();
+  
+  // Create permanent buttons (no collectors needed!)
+  const meButton = new ButtonBuilder()
+    .setCustomId('booster_welcome_me')
+    .setLabel('My Status')
+    .setStyle(ButtonStyle.Primary);
+  
+  const addMeButton = new ButtonBuilder()
+    .setCustomId('booster_welcome_addme')
+    .setLabel('Add me')
+    .setStyle(ButtonStyle.Success);
+  
+  // Add buttons to an action row
+  const row = new ActionRowBuilder()
+    .addComponents(meButton, addMeButton);
+  
+  // Send the message with the embed and permanent buttons
+  await interaction.reply({
+    embeds: [embed],
+    components: [row]
+  });
+}
+
+// Handle button interactions for welcome command
+async function handleWelcomeButton(interaction, client) {
+  if (interaction.customId === 'booster_welcome_me') {
+    // Call the me command functionality
+    await executeMe(interaction, client);
+  } else if (interaction.customId === 'booster_welcome_addme') {
+    // Create a modal for game ID input
+    const modal = new ModalBuilder()
+      .setCustomId('booster_gameIdModal')
+      .setTitle('Enter Your Game ID');
+    
+    // Create text input for game ID
+    const gameIdInput = new TextInputBuilder()
+      .setCustomId('booster_game_id_input')
+      .setLabel('Game ID')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('28 characters, letters and numbers only')
+      .setRequired(true)
+      .setMinLength(28)
+      .setMaxLength(28);
+
+    // Add input to the modal
+    const firstActionRow = new ActionRowBuilder().addComponents(gameIdInput);
+    modal.addComponents(firstActionRow);
+    
+    // Show the modal to the user
+    await interaction.showModal(modal);
+  }
+}
+
+// Handle modal submissions for welcome command
+async function handleWelcomeModal(interaction, client) {
+  if (interaction.customId === 'booster_gameIdModal') {
+    const gameId = interaction.fields.getTextInputValue('booster_game_id_input');
+    
+    // Validate game_id: must be exactly 28 characters and contain only letters and numbers
+    if (!gameId || gameId.length !== 28 || !/^[a-zA-Z0-9]+$/.test(gameId)) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle('Error Adding Booster')
+        .setColor(Colors.ERROR)
+        .setDescription('Invalid game ID. The game ID must be exactly 28 characters long and contain only letters and numbers.')
+        .setTimestamp();
+      
+      await interaction.reply({
+        embeds: [errorEmbed],
+        flags: ['Ephemeral']
+      });
+      return;
+    }
+    
+    // Process the game ID
+    await processGameIdFromModal(interaction, gameId, client);
   }
 }
