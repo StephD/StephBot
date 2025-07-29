@@ -143,9 +143,10 @@ export async function getBoosterByDiscordId(discordId) {
  * @param {string} discordName - The Discord username
  * @param {string} gameId - The new in-game ID
  * @param {number|null} premiumSince - Timestamp when the user started boosting or null if not boosting
+ * @param {string} [discordNickname] - The Discord nickname of the user
  * @returns {Promise<{success: boolean, message: string, data?: any}>}
  */
-export async function updateBoosterGameId(discordId, discordName, gameId, premiumSince, discordNickname = null) {
+export async function updateBoosterGameId(discordId, discordName, gameId, premiumSince, discordNickname = null, isDM = false) {
   try {
     // First check if the booster exists
     const { data: existingBooster, error: fetchError } = await supabase
@@ -162,15 +163,20 @@ export async function updateBoosterGameId(discordId, discordName, gameId, premiu
     
     if (existingBooster) {
       // Update existing booster
-      const updateData = {
+      let updateData = {
         game_id: gameId,
-        active: premiumSince ? true : false,
         discord_name: discordName,
         discord_nickname: discordNickname,
         discord_id: discordId,
-        premium_since: premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null,
         updated_at: new Date().toISOString()
       };
+      
+      // Only update premium status if premiumSince is provided
+      // This allows DM commands to only update the game ID without changing premium status
+      if (!isDM) {
+        updateData.active = premiumSince ? true : false;
+        updateData.premium_since = premiumSince ? new Date(premiumSince).toISOString().split('T')[0] : null;
+      }
       
       const { data, error } = await supabase
         .from('boosters')
@@ -188,6 +194,8 @@ export async function updateBoosterGameId(discordId, discordName, gameId, premiu
       };
     } else {
       // Create new booster
+      // For new boosters, we'll set active and premium_since based on premiumSince
+      // If premiumSince is null, we'll create an inactive booster
       const insertData = {
         discord_id: discordId,
         discord_name: discordName,

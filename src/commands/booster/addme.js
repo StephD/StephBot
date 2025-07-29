@@ -32,8 +32,9 @@ export async function executeAddMe(interaction, client) {
     const nickname = user.globalName || discordName;
     const premiumSince = member?.premiumSinceTimestamp || null;
     
-    // console.log(`Adding booster: ${discordId}, ${discordName}, ${gameId}, ${premiumSince}, ${nickname}`);
-
+    // Determine if the interaction is from a DM
+    const isDM = !interaction.guild;
+    
     // bot log channel
     let botLogChannel = null;
     
@@ -61,13 +62,23 @@ export async function executeAddMe(interaction, client) {
     }
     
     // Call the function to create/update the booster in Supabase
+    // If in a DM, we'll pass null for premiumSince to avoid updating premium status
     const result = await updateBoosterGameId(
       discordId,
       discordName,
       gameId,
-      premiumSince,
-      nickname // Pass the nickname as the discordNickname parameter
+      premiumSince, // Only pass premiumSince if not in a DM
+      nickname, // Pass the nickname as the discordNickname parameter
+      isDM
     );
+    
+    // Get the booster data from the result instead of making another database call
+    const boosterData = result.data;
+    const dbBoostingStatus = boosterData?.active 
+      ? `✅ Boosting since ${new Date(boosterData.premium_since).toLocaleDateString()}` 
+      : '❌ Not boosting';
+    
+    const discordBoostingStatus = isDM ? '❓ I cannot check your boost status in DMs' : premiumSince ? `✅ Boosting since ${new Date(premiumSince).toLocaleDateString()}` : '❌ Not currently boosting';
     
     if (result.success) {
       const successEmbed = new EmbedBuilder()
@@ -76,9 +87,9 @@ export async function executeAddMe(interaction, client) {
         .setDescription(result.message)
         .addFields(
           { name: 'Discord User', value: `<@${discordId}>`, inline: true },
-          // { name: 'Nickname', value: nickname, inline: true },
           { name: 'In-Game ID', value: gameId, inline: true },
-          { name: 'Booster Status', value: premiumSince ? `✅ Boosting since ${new Date(premiumSince).toLocaleDateString()}` : '❌ Not currently boosting' }
+          { name: 'Boosting Status', value: discordBoostingStatus },
+          // { name: 'Database Status', value: dbBoostingStatus }
         )
       
       await interaction.editReply({ embeds: [successEmbed] });
@@ -87,14 +98,14 @@ export async function executeAddMe(interaction, client) {
       if (botLogChannel) {
         const logEmbed = new EmbedBuilder()
           .setColor(Colors.BOOSTER)
-          .setTitle('💎 Booster Game ID Added')
+          .setTitle(`💎 Booster Game ID Added from ${isDM ? 'DM' : 'Server'}`)
           .setDescription(`**${nickname}** has added their game ID using the **/booster addme** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
-            // { name: 'Nickname', value: nickname, inline: true },
             { name: 'In-Game ID', value: gameId, inline: true },
-            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting' },
-            { name: 'Database Status', value: '✅ Successfully added to database', inline: true }
+            { name: 'Boosting Status', value: isDM ? '❓ I cannot check your boost status in DMs' : premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting' },
+            { name: 'Database Status', value: isDM ? '✅ Game ID updated (premium status preserved)' : '✅ All data updated', inline: true },
+            { name: 'Current DB Status', value: dbBoostingStatus, inline: true }
           )
           .setFooter({ text: 'Booster database updated successfully' })
           .setTimestamp();
@@ -103,7 +114,7 @@ export async function executeAddMe(interaction, client) {
       }
     } else {
       const errorEmbed = new EmbedBuilder()
-        .setTitle('Error Adding Booster')
+        .setTitle(`Error Adding Booster from ${isDM ? 'DM' : 'Server'}`)
         .setColor(Colors.ERROR)
         .setDescription(result.message)
       
@@ -113,16 +124,17 @@ export async function executeAddMe(interaction, client) {
       if (botLogChannel) {
         const errorLogEmbed = new EmbedBuilder()
           .setColor(Colors.ERROR)
-          .setTitle('❌ Booster Game ID Error')
+          .setTitle(`❌ Booster Game ID Error from ${isDM ? 'DM' : 'Server'}`)
           .setDescription(`Failed to add game ID for **${nickname}** using the **/booster addme** command`)
           .addFields(
             { name: 'User', value: `<@${discordId}> (${discordName})`, inline: true },
-            // { name: 'Nickname', value: nickname, inline: true },
             { name: 'Attempted Game ID', value: gameId, inline: true },
-            { name: 'Booster Status', value: premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
+            { name: 'Boosting Status', value: isDM ? '❓ I cannot check your boost status in DMs' : premiumSince ? `✅ Boosting since <t:${Math.floor(premiumSince/1000)}:R>` : '❌ Not currently boosting', inline: true },
+            { name: 'Database Status', value: dbBoostingStatus, inline: true },
             { name: 'Error', value: result.message, inline: false }
           )
           .setFooter({ text: 'Database operation failed' })
+          .setTimestamp();
         
         await botLogChannel.send({ embeds: [errorLogEmbed] });
       }
